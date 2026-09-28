@@ -74,7 +74,9 @@ flutter:
   assets:
     - assets/tessdata/
     - assets/tessdata_config.json
-    - assets/deen/
+
+  # DEEN কনটেন্ট (দিনাকরি!): এখন অ্যাপের বাইরে — GitHub রিপো
+  #   (github.com/.../islamic_data) থেকে ডাউনলোড হয় (content_repository.dart)।
 
   # To add assets to your application, add an assets section, like this:
   # assets:

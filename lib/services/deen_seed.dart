@@ -1,6 +1,4 @@
-import 'dart:convert';
-
-import 'package:flutter/services.dart';
+import 'package:lifeos/services/content_repository.dart';
 
 /// একটি নামাজ-পরবর্তী ধাপ (৩৩/৩৩/৩৪, ইস্তিগফার, আয়াতুল কুরসি)।
 class PostPrayerStep {
@@ -152,7 +150,8 @@ class SurahItem {
 
   bool get hasSource => true;
 
-  String get meta => '${_bn(index)} নং · ${_bn(ayahCount)} আয়াত · $nameMeaning';
+  String get meta =>
+      '${_bn(index)} নং · ${_bn(ayahCount)} আয়াত · $nameMeaning';
 }
 
 /// 🧠 memorization-এ দেখানোর জন্য অভিন্ন item — দুআ বা সুরা যেকোনো।
@@ -178,8 +177,7 @@ class MemItem {
   bool get hasSource => source.trim().isNotEmpty;
 }
 
-/// assets/deen/*.json লোড + validate — একবার bundle, runtime-এ সরাসরি।
-/// কনটেন্ট কখনো Hive-এ কপি হয় না; update-এ ভুলের সম্ভাবনা এড়াতে।
+/// ContentRepository থেকে ইসলামিক কনটেন্ট লোড + validate — GitHub রিপো, লোকাল Hive ক্যাশ।
 class DeenSeed {
   static List<PostPrayerStep>? _postPrayer;
   static List<DuaItem>? _duas;
@@ -189,24 +187,25 @@ class DeenSeed {
 
   static Future<List<PostPrayerStep>> postPrayer() async {
     if (_postPrayer != null) return _postPrayer!;
-    final raw = await rootBundle.loadString('assets/deen/post_prayer.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final data = await ContentRepository.loadMap('post_prayer.json');
     final steps = <PostPrayerStep>[];
-    for (final s in (data['steps'] as List? ?? const [])) {
+    for (final s in (data?['steps'] as List? ?? const [])) {
       final m = s as Map<String, dynamic>;
-      steps.add(PostPrayerStep(
-        id: (m['id'] as String? ?? '').trim(),
-        arabic: (m['arabic'] as String? ?? '').trim(),
-        bangla: (m['bangla'] as String? ?? '').trim(),
-        meaning: (m['meaning'] as String? ?? '').trim(),
-        transliteration: (m['transliteration'] as String? ?? '').trim(),
-        source: (m['source'] as String? ?? '').trim(),
-        repeat: ((m['repeat'] as num?) ?? 1).toInt(),
-        readOnly: m['readOnly'] == true,
-      ));
+      steps.add(
+        PostPrayerStep(
+          id: (m['id'] as String? ?? '').trim(),
+          arabic: (m['arabic'] as String? ?? '').trim(),
+          bangla: (m['bangla'] as String? ?? '').trim(),
+          meaning: (m['meaning'] as String? ?? '').trim(),
+          transliteration: (m['transliteration'] as String? ?? '').trim(),
+          source: (m['source'] as String? ?? '').trim(),
+          repeat: ((m['repeat'] as num?) ?? 1).toInt(),
+          readOnly: m['readOnly'] == true,
+        ),
+      );
     }
     if (steps.isEmpty) {
-      throw StateError('assets/deen/post_prayer.json-এ কোনো ধাপ নেই');
+      throw StateError('post_prayer.json-এ কোনো ধাপ নেই');
     }
     _postPrayer = steps;
     return steps;
@@ -214,20 +213,21 @@ class DeenSeed {
 
   static Future<List<DuaItem>> duas() async {
     if (_duas != null) return _duas!;
-    final raw = await rootBundle.loadString('assets/deen/dua.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final data = await ContentRepository.loadMap('dua.json');
     final list = <DuaItem>[];
-    for (final d in (data['duas'] as List? ?? const [])) {
+    for (final d in (data?['duas'] as List? ?? const [])) {
       final m = d as Map<String, dynamic>;
-      list.add(DuaItem(
-        id: (m['id'] as String? ?? '').trim(),
-        section: (m['section'] as String? ?? '').trim(),
-        type: (m['type'] as String? ?? 'general').trim(),
-        arabic: (m['arabic'] as String? ?? '').trim(),
-        transliteration: (m['transliteration'] as String? ?? '').trim(),
-        bangla: (m['bangla'] as String? ?? '').trim(),
-        source: (m['source'] as String? ?? '').trim(),
-      ));
+      list.add(
+        DuaItem(
+          id: (m['id'] as String? ?? '').trim(),
+          section: (m['section'] as String? ?? '').trim(),
+          type: (m['type'] as String? ?? 'general').trim(),
+          arabic: (m['arabic'] as String? ?? '').trim(),
+          transliteration: (m['transliteration'] as String? ?? '').trim(),
+          bangla: (m['bangla'] as String? ?? '').trim(),
+          source: (m['source'] as String? ?? '').trim(),
+        ),
+      );
     }
     _duas = list;
     return list;
@@ -235,29 +235,29 @@ class DeenSeed {
 
   /// UI-তে সেকশন ক্রম — json-এর `sections` অ্যারে বা প্রথম-আগমন ক্রম।
   static Future<List<String>> duaSections() async {
-    final raw = await rootBundle.loadString('assets/deen/dua.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
-    final list = data['sections'];
+    final data = await ContentRepository.loadMap('dua.json');
+    final list = data?['sections'];
     if (list is List) return list.cast<String>();
     return const [];
   }
 
   static Future<List<HadithItem>> hadiths() async {
     if (_hadiths != null) return _hadiths!;
-    final raw = await rootBundle.loadString('assets/deen/hadith.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final data = await ContentRepository.loadMap('hadith.json');
     final list = <HadithItem>[];
-    for (final h in (data['hadiths'] as List? ?? const [])) {
+    for (final h in (data?['hadiths'] as List? ?? const [])) {
       final m = h as Map<String, dynamic>;
-      list.add(HadithItem(
-        id: (m['id'] as String? ?? '').trim(),
-        topic: (m['topic'] as String? ?? '').trim(),
-        arabic: (m['arabic'] as String? ?? '').trim(),
-        bangla: (m['bangla'] as String? ?? '').trim(),
-        book: (m['book'] as String? ?? '').trim(),
-        number: (m['number'] as String? ?? '').trim(),
-        grade: (m['grade'] as String? ?? '').trim(),
-      ));
+      list.add(
+        HadithItem(
+          id: (m['id'] as String? ?? '').trim(),
+          topic: (m['topic'] as String? ?? '').trim(),
+          arabic: (m['arabic'] as String? ?? '').trim(),
+          bangla: (m['bangla'] as String? ?? '').trim(),
+          book: (m['book'] as String? ?? '').trim(),
+          number: (m['number'] as String? ?? '').trim(),
+          grade: (m['grade'] as String? ?? '').trim(),
+        ),
+      );
     }
     _hadiths = list;
     return list;
@@ -265,19 +265,20 @@ class DeenSeed {
 
   static Future<List<AdhkarItem>> adhkar() async {
     if (_adhkar != null) return _adhkar!;
-    final raw = await rootBundle.loadString('assets/deen/adhkar.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final data = await ContentRepository.loadMap('adhkar.json');
     final list = <AdhkarItem>[];
-    for (final a in (data['adhkar'] as List? ?? const [])) {
+    for (final a in (data?['adhkar'] as List? ?? const [])) {
       final m = a as Map<String, dynamic>;
-      list.add(AdhkarItem(
-        id: (m['id'] as String? ?? '').trim(),
-        time: (m['time'] as String? ?? 'both').trim(),
-        arabic: (m['arabic'] as String? ?? '').trim(),
-        bangla: (m['bangla'] as String? ?? '').trim(),
-        repeat: ((m['repeat'] as num?) ?? 1).toInt(),
-        source: (m['source'] as String? ?? '').trim(),
-      ));
+      list.add(
+        AdhkarItem(
+          id: (m['id'] as String? ?? '').trim(),
+          time: (m['time'] as String? ?? 'both').trim(),
+          arabic: (m['arabic'] as String? ?? '').trim(),
+          bangla: (m['bangla'] as String? ?? '').trim(),
+          repeat: ((m['repeat'] as num?) ?? 1).toInt(),
+          source: (m['source'] as String? ?? '').trim(),
+        ),
+      );
     }
     _adhkar = list;
     return list;
@@ -285,26 +286,35 @@ class DeenSeed {
 
   static Future<List<SurahItem>> surahs() async {
     if (_surahs != null) return _surahs!;
-    final raw = await rootBundle.loadString('assets/deen/surahs.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final indexData = await ContentRepository.loadMap(
+      'quran/surahs_index.json',
+    );
+    final index = indexData?['surahs'] as List? ?? const [];
     final list = <SurahItem>[];
-    for (final s in (data['surahs'] as List? ?? const [])) {
-      final m = s as Map<String, dynamic>;
-      list.add(SurahItem(
-        id: (m['id'] as String? ?? '').trim(),
-        index: ((m['index'] as num?) ?? 0).toInt(),
-        name: (m['name'] as String? ?? '').trim(),
-        arabicName: (m['arabicName'] as String? ?? '').trim(),
-        nameMeaning: (m['nameMeaning'] as String? ?? '').trim(),
-        revelation: (m['revelation'] as String? ?? '').trim(),
-        ayahCount: ((m['ayahCount'] as num?) ?? 0).toInt(),
-        tags: [
-          for (final t in (m['tags'] as List? ?? const [])) t.toString().trim(),
-        ],
-        arabic: (m['arabic'] as String? ?? '').trim(),
-        bangla: (m['bangla'] as String? ?? '').trim(),
-        transliteration: (m['transliteration'] as String? ?? '').trim(),
-      ));
+    for (final s in index) {
+      final im = s as Map<String, dynamic>;
+      final id = (im['id'] as String? ?? '').trim();
+      final idx = ((im['index'] as num?) ?? 0).toInt();
+      final fileKey = 'quran/${idx.toString().padLeft(3, '0')}_$id.json';
+      final m = await ContentRepository.loadMap(fileKey);
+      list.add(
+        SurahItem(
+          id: id,
+          index: idx,
+          name: (m?['name'] as String? ?? im['name'] as String? ?? '').trim(),
+          arabicName: (m?['arabicName'] as String? ?? '').trim(),
+          nameMeaning: (m?['nameMeaning'] as String? ?? '').trim(),
+          revelation: (m?['revelation'] as String? ?? '').trim(),
+          ayahCount: ((m?['ayahCount'] as num?) ?? 0).toInt(),
+          tags: [
+            for (final t in (m?['tags'] as List? ?? const []))
+              t.toString().trim(),
+          ],
+          arabic: (m?['arabic'] as String? ?? '').trim(),
+          bangla: (m?['bangla'] as String? ?? '').trim(),
+          transliteration: (m?['transliteration'] as String? ?? '').trim(),
+        ),
+      );
     }
     _surahs = list;
     return list;
@@ -316,15 +326,16 @@ class DeenSeed {
     final surahList = await surahs();
     return [
       for (final s in surahList)
-        MemItem(
-          key: 'surah:${s.id}',
-          label: 'সূরা ${s.name}',
-          arabic: s.arabic,
-          bangla: s.bangla,
-          transliteration: s.transliteration,
-          source: s.source,
-          isSurah: true,
-        ),
+        if (s.arabic.trim().isNotEmpty)
+          MemItem(
+            key: 'surah:${s.id}',
+            label: 'সূরা ${s.name}',
+            arabic: s.arabic,
+            bangla: s.bangla,
+            transliteration: s.transliteration,
+            source: s.source,
+            isSurah: true,
+          ),
       for (final d in duaList)
         MemItem(
           key: 'dua:${d.id}',

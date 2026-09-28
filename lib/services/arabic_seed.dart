@@ -1,6 +1,4 @@
-import 'dart:convert';
-
-import 'package:flutter/services.dart';
+import 'package:lifeos/services/content_repository.dart';
 
 /// আরবি বর্ণমালার ফন্ট — কুরআন পড়া শেখার path।
 class ArabicLetterItem {
@@ -223,7 +221,7 @@ class ContentFileItem {
   });
 }
 
-/// assets/deen/arabic_*.json লোড + validate।
+/// ContentRepository থেকে আরবি লেসন লোড।
 class ArabicSeed {
   static List<ArabicLetterItem>? _letters;
   static List<HarakaItem>? _harakat;
@@ -236,25 +234,28 @@ class ArabicSeed {
 
   static Future<List<ArabicLetterItem>> letters() async {
     if (_letters != null) return _letters!;
-    final raw = await rootBundle.loadString('assets/deen/arabic_letters.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final data =
+        (await ContentRepository.loadMap('arabic/letters.json')) ??
+        <String, dynamic>{};
     final list = <ArabicLetterItem>[];
     for (final l in (data['letters'] as List? ?? const [])) {
       final m = l as Map<String, dynamic>;
-      list.add(ArabicLetterItem(
-        id: (m['id'] as String? ?? '').trim(),
-        letter: (m['letter'] as String? ?? '').trim(),
-        name: (m['name'] as String? ?? '').trim(),
-        reading: (m['reading'] as String? ?? '').trim(),
-        isolated: (m['isolated'] as String? ?? '').trim(),
-        initial: (m['initial'] as String? ?? '').trim(),
-        medial: (m['medial'] as String? ?? '').trim(),
-        finalJ: (m['final'] as String? ?? '').trim(),
-        example: (m['example'] as String? ?? '').trim(),
-        exampleReading: (m['exampleReading'] as String? ?? '').trim(),
-        exampleBangla: (m['exampleBangla'] as String? ?? '').trim(),
-        connectsForward: (m['connectsForward'] as bool?) ?? true,
-      ));
+      list.add(
+        ArabicLetterItem(
+          id: (m['id'] as String? ?? '').trim(),
+          letter: (m['letter'] as String? ?? '').trim(),
+          name: (m['name'] as String? ?? '').trim(),
+          reading: (m['reading'] as String? ?? '').trim(),
+          isolated: (m['isolated'] as String? ?? '').trim(),
+          initial: (m['initial'] as String? ?? '').trim(),
+          medial: (m['medial'] as String? ?? '').trim(),
+          finalJ: (m['final'] as String? ?? '').trim(),
+          example: (m['example'] as String? ?? '').trim(),
+          exampleReading: (m['exampleReading'] as String? ?? '').trim(),
+          exampleBangla: (m['exampleBangla'] as String? ?? '').trim(),
+          connectsForward: (m['connectsForward'] as bool?) ?? true,
+        ),
+      );
     }
     _letters = list;
     return list;
@@ -262,18 +263,21 @@ class ArabicSeed {
 
   static Future<List<HarakaItem>> harakat() async {
     if (_harakat != null) return _harakat!;
-    final raw = await rootBundle.loadString('assets/deen/arabic_harakat.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final data =
+        (await ContentRepository.loadMap('arabic/harakat.json')) ??
+        <String, dynamic>{};
     final list = <HarakaItem>[];
     for (final h in (data['harakat'] as List? ?? const [])) {
       final m = h as Map<String, dynamic>;
-      list.add(HarakaItem(
-        id: (m['id'] as String? ?? '').trim(),
-        name: (m['name'] as String? ?? '').trim(),
-        mark: (m['mark'] as String? ?? '').trim(),
-        reading: (m['reading'] as String? ?? '').trim(),
-        bangla: (m['bangla'] as String? ?? '').trim(),
-      ));
+      list.add(
+        HarakaItem(
+          id: (m['id'] as String? ?? '').trim(),
+          name: (m['name'] as String? ?? '').trim(),
+          mark: (m['mark'] as String? ?? '').trim(),
+          reading: (m['reading'] as String? ?? '').trim(),
+          bangla: (m['bangla'] as String? ?? '').trim(),
+        ),
+      );
     }
     _harakat = list;
     return list;
@@ -281,18 +285,21 @@ class ArabicSeed {
 
   static Future<List<ArabicWordItem>> words() async {
     if (_words != null) return _words!;
-    final raw = await rootBundle.loadString('assets/deen/arabic_words.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final data =
+        (await ContentRepository.loadMap('arabic/words.json')) ??
+        <String, dynamic>{};
     final list = <ArabicWordItem>[];
     for (final w in (data['words'] as List? ?? const [])) {
       final m = w as Map<String, dynamic>;
-      list.add(ArabicWordItem(
-        id: (m['id'] as String? ?? '').trim(),
-        arabic: (m['arabic'] as String? ?? '').trim(),
-        reading: (m['reading'] as String? ?? '').trim(),
-        bangla: (m['bangla'] as String? ?? '').trim(),
-        source: (m['source'] as String? ?? '').trim(),
-      ));
+      list.add(
+        ArabicWordItem(
+          id: (m['id'] as String? ?? '').trim(),
+          arabic: (m['arabic'] as String? ?? '').trim(),
+          reading: (m['reading'] as String? ?? '').trim(),
+          bangla: (m['bangla'] as String? ?? '').trim(),
+          source: (m['source'] as String? ?? '').trim(),
+        ),
+      );
     }
     _words = list;
     return list;
@@ -301,8 +308,9 @@ class ArabicSeed {
   /// কুরআন word-by-word — এখন সূরা ফাতিহা; পরে সব সুরা।
   static Future<List<QuranSurahItem>> quran() async {
     if (_quran != null) return _quran!;
-    final raw = await rootBundle.loadString('assets/deen/quran_words.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final data =
+        (await ContentRepository.loadMap('quran/fatiha_words.json')) ??
+        <String, dynamic>{};
     final surahs = <QuranSurahItem>[];
     final id = (data['id'] as String? ?? '').trim();
     final name = (data['name'] as String? ?? '').trim();
@@ -312,19 +320,23 @@ class ArabicSeed {
       final words = <QuranWordItem>[];
       for (final w in (m['words'] as List? ?? const [])) {
         final wm = w as Map<String, dynamic>;
-        words.add(QuranWordItem(
-          id: (wm['id'] as String? ?? '').trim(),
-          arabic: (wm['arabic'] as String? ?? '').trim(),
-          reading: (wm['reading'] as String? ?? '').trim(),
-          bangla: (wm['bangla'] as String? ?? '').trim(),
-        ));
+        words.add(
+          QuranWordItem(
+            id: (wm['id'] as String? ?? '').trim(),
+            arabic: (wm['arabic'] as String? ?? '').trim(),
+            reading: (wm['reading'] as String? ?? '').trim(),
+            bangla: (wm['bangla'] as String? ?? '').trim(),
+          ),
+        );
       }
-      ayahs.add(QuranAyahItem(
-        ayah: ((m['ayah'] as num?) ?? 0).toInt(),
-        arabic: (m['arabic'] as String? ?? '').trim(),
-        bangla: (m['bangla'] as String? ?? '').trim(),
-        words: words,
-      ));
+      ayahs.add(
+        QuranAyahItem(
+          ayah: ((m['ayah'] as num?) ?? 0).toInt(),
+          arabic: (m['arabic'] as String? ?? '').trim(),
+          bangla: (m['bangla'] as String? ?? '').trim(),
+          words: words,
+        ),
+      );
     }
     if (id.isNotEmpty) {
       surahs.add(QuranSurahItem(id: id, name: name, ayahs: ayahs));
@@ -335,30 +347,35 @@ class ArabicSeed {
 
   static Future<List<VocabItem>> vocab() async {
     if (_vocab != null) return _vocab!;
-    final raw = await rootBundle.loadString('assets/deen/quran_vocab.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final data =
+        (await ContentRepository.loadMap('arabic/vocab.json')) ??
+        <String, dynamic>{};
     final list = <VocabItem>[];
     for (final v in (data['words'] as List? ?? const [])) {
       final m = v as Map<String, dynamic>;
       final occ = <QuranOccurrenceItem>[];
       for (final o in (m['occurrences'] as List? ?? const [])) {
         final om = o as Map<String, dynamic>;
-        occ.add(QuranOccurrenceItem(
-          surah: ((om['surah'] as num?) ?? 0).toInt(),
-          surahName: (om['surahName'] as String? ?? '').trim(),
-          ayah: ((om['ayah'] as num?) ?? 0).toInt(),
-          arabic: (om['arabic'] as String? ?? '').trim(),
-          bangla: (om['bangla'] as String? ?? '').trim(),
-        ));
+        occ.add(
+          QuranOccurrenceItem(
+            surah: ((om['surah'] as num?) ?? 0).toInt(),
+            surahName: (om['surahName'] as String? ?? '').trim(),
+            ayah: ((om['ayah'] as num?) ?? 0).toInt(),
+            arabic: (om['arabic'] as String? ?? '').trim(),
+            bangla: (om['bangla'] as String? ?? '').trim(),
+          ),
+        );
       }
-      list.add(VocabItem(
-        id: (m['id'] as String? ?? '').trim(),
-        arabic: (m['arabic'] as String? ?? '').trim(),
-        reading: (m['reading'] as String? ?? '').trim(),
-        bangla: (m['bangla'] as String? ?? '').trim(),
-        root: (m['root'] as String? ?? '').trim(),
-        occurrences: occ,
-      ));
+      list.add(
+        VocabItem(
+          id: (m['id'] as String? ?? '').trim(),
+          arabic: (m['arabic'] as String? ?? '').trim(),
+          reading: (m['reading'] as String? ?? '').trim(),
+          bangla: (m['bangla'] as String? ?? '').trim(),
+          root: (m['root'] as String? ?? '').trim(),
+          occurrences: occ,
+        ),
+      );
     }
     _vocab = list;
     return list;
@@ -366,26 +383,31 @@ class ArabicSeed {
 
   static Future<List<RootItem>> roots() async {
     if (_roots != null) return _roots!;
-    final raw = await rootBundle.loadString('assets/deen/root_words.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final data =
+        (await ContentRepository.loadMap('arabic/roots.json')) ??
+        <String, dynamic>{};
     final list = <RootItem>[];
     for (final r in (data['roots'] as List? ?? const [])) {
       final m = r as Map<String, dynamic>;
       final derived = <RootDerivedItem>[];
       for (final d in (m['derived'] as List? ?? const [])) {
         final dm = d as Map<String, dynamic>;
-        derived.add(RootDerivedItem(
-          arabic: (dm['arabic'] as String? ?? '').trim(),
-          reading: (dm['reading'] as String? ?? '').trim(),
-          bangla: (dm['bangla'] as String? ?? '').trim(),
-          type: (dm['type'] as String? ?? '').trim(),
-        ));
+        derived.add(
+          RootDerivedItem(
+            arabic: (dm['arabic'] as String? ?? '').trim(),
+            reading: (dm['reading'] as String? ?? '').trim(),
+            bangla: (dm['bangla'] as String? ?? '').trim(),
+            type: (dm['type'] as String? ?? '').trim(),
+          ),
+        );
       }
-      list.add(RootItem(
-        root: (m['root'] as String? ?? '').trim(),
-        rootMeaning: (m['rootMeaning'] as String? ?? '').trim(),
-        derived: derived,
-      ));
+      list.add(
+        RootItem(
+          root: (m['root'] as String? ?? '').trim(),
+          rootMeaning: (m['rootMeaning'] as String? ?? '').trim(),
+          derived: derived,
+        ),
+      );
     }
     _roots = list;
     return list;
@@ -393,29 +415,36 @@ class ArabicSeed {
 
   static Future<List<GrammarLessonItem>> grammar() async {
     if (_grammar != null) return _grammar!;
-    final raw = await rootBundle.loadString('assets/deen/arabic_grammar.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final data =
+        (await ContentRepository.loadMap('arabic/grammar.json')) ??
+        <String, dynamic>{};
     final list = <GrammarLessonItem>[];
     for (final l in (data['lessons'] as List? ?? const [])) {
       final m = l as Map<String, dynamic>;
       final examples = <GrammarExampleItem>[];
       for (final e in (m['examples'] as List? ?? const [])) {
         final em = e as Map<String, dynamic>;
-        examples.add(GrammarExampleItem(
-          arabic: (em['arabic'] as String? ?? '').trim(),
-          reading: (em['reading'] as String? ?? '').trim(),
-          bangla: (em['bangla'] as String? ?? '').trim(),
-          note: (em['note'] as String? ?? '').trim(),
-        ));
+        examples.add(
+          GrammarExampleItem(
+            arabic: (em['arabic'] as String? ?? '').trim(),
+            reading: (em['reading'] as String? ?? '').trim(),
+            bangla: (em['bangla'] as String? ?? '').trim(),
+            note: (em['note'] as String? ?? '').trim(),
+          ),
+        );
       }
-      list.add(GrammarLessonItem(
-        id: (m['id'] as String? ?? '').trim(),
-        title: (m['title'] as String? ?? '').trim(),
-        emoji: (m['emoji'] as String? ?? '').trim(),
-        explanation: (m['explanation'] as List? ?? const []).map((e) => (e as String? ?? '').trim()).toList(),
-        examples: examples,
-        tip: (m['tip'] as String? ?? '').trim(),
-      ));
+      list.add(
+        GrammarLessonItem(
+          id: (m['id'] as String? ?? '').trim(),
+          title: (m['title'] as String? ?? '').trim(),
+          emoji: (m['emoji'] as String? ?? '').trim(),
+          explanation: (m['explanation'] as List? ?? const [])
+              .map((e) => (e as String? ?? '').trim())
+              .toList(),
+          examples: examples,
+          tip: (m['tip'] as String? ?? '').trim(),
+        ),
+      );
     }
     _grammar = list;
     return list;
@@ -423,19 +452,17 @@ class ArabicSeed {
 
   static Future<List<ContentFileItem>> manifest() async {
     if (_manifest != null) return _manifest!;
-    final raw = await rootBundle.loadString('assets/deen/content_manifest.json');
-    final data = jsonDecode(raw) as Map<String, dynamic>;
-    final list = <ContentFileItem>[];
-    for (final f in (data['files'] as List? ?? const [])) {
-      final m = f as Map<String, dynamic>;
-      list.add(ContentFileItem(
-        path: (m['path'] as String? ?? '').trim(),
-        kind: (m['kind'] as String? ?? '').trim(),
-        version: ((m['version'] as num?) ?? 0).toInt(),
-        count: ((m['count'] as num?) ?? 0).toInt(),
-        source: (m['source'] as String? ?? '').trim(),
-      ));
-    }
+    final manifest = await ContentRepository.manifest();
+    final list = <ContentFileItem>[
+      for (final f in manifest)
+        ContentFileItem(
+          path: f.path,
+          kind: f.kind,
+          version: f.version,
+          count: f.count,
+          source: f.source,
+        ),
+    ];
     _manifest = list;
     return list;
   }
