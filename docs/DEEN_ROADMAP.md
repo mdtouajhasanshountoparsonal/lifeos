@@ -62,7 +62,7 @@ GitHub JSON → Downloader → Validator → Local DB → Repository → Offline
 | M9 | Content updater | অ্যাপ-বাইরে GitHub রিপো (`islamic_data`) → first-run ডাউনলোড → offline Hive | 🚧 রিপো push ও first-run টেস্ট বাকি |
 | **M10** | **Grammar** | Noun/Verb/Particle → Gender → Number → Case → Sentence role, বাংলায় | ✅ |
 | **M11** | **AI Teacher** | offline প্রশ্ন-উত্তর (সেভ করা content), Gemini চালু থাকলে আরও (M11.1 ✅; M11.2 ✅ — ব্যক্তিগত প্রগ্রেস রেকর্ড: কোন ধাপে কতটুকু "জানি ✓", পরের ধাপের পরামর্শ, আজকের প্রশ্ন-সংখ্যা, রেকর্ড — স্কোর নয়) | ✅ |
-| M12 | Speaking/Listening | বাক্য বলো → Gemini/পরিবেশে চেক, dashnote: dedicated speech tech ছাড়া pronunciation judge নয় | ⏳ |
+| M12 | Speaking/Listening | বাক্য বলো → **(v1 ✅)** "🗣️ বলে পড়ো" self-check: শব্দ/শব্দভাণ্ডার/ফাতিহা আয়াত — আরবি দেখে নিজে পড়ে বলো, পড়া/অর্থ পরে খুলো, `said:*` লোকাল রেকর্ড (রেকর্ড, বিচার নয়)। **Listening (audio content/TTS) ও pronunciation-judge এখনো নেই** — dedicated speech tech ছাড়া সম্ভব নয় | 🚧 |
 
 ---
 
@@ -88,7 +88,8 @@ GitHub JSON → Downloader → Validator → Local DB → Repository → Offline
 - `arabic/vocab.json` — ১৯টি শব্দ (রব্ব, রাহমাহ, ইলম…): অর্থ, মূলধাতু, "কুরআনে কোথায় এসেছে" (সূরা:আয়াত + আরবি + বাংলা)। Screen: `vocabulary_screen` + "জানি ✓" (`vocab:<id>`)।
 - `arabic/roots.json` — ৬টি মূলধাতু (كتب, رحم, علم, صبر, سلم, نور): এক শিকড় থেকে বড় হওয়া শব্দের তালিকা। Screen: `root_words_screen` (ট্যাপে শাখা খোলে)।
 - `arabic/grammar.json` — ৭টি পাঠ: নাম, আল-, নামবাক্য, ক্রিয়াবাক্য, অবস্থা-শব্দ, সর্বনাম, বাক্য গড়া — সব উদাহরণ কুরআন থেকে। Screen: `grammar_screen`। Loader: `ArabicSeed.grammar()`।
-- `lib/services/arabic_teacher.dart` + `arabic_teacher_screen` — offline প্রশ্ন-উত্তর: হরকত / অক্ষর / শব্দভাণ্ডার / মূলধাতু / পথনির্দেশনা / ফাতিহা / ব্যাকরণ intent। Online `Gemini` চালু থাকলে (`AiSettings.onlineEnabled` + `LIFEOS_GEMINI_KEY`) ফ্রি-প্রশ্নেও উত্তর; না থাকলে নিজেই offline-এ নামে।
+- `lib/services/arabic_teacher.dart` + `arabic_teacher_screen` — offline প্রশ্ন-উত্তর: হরকত / অক্ষর / শব্দভাণ্ডার / মূলধাতু / পথনির্দেশনা / ফাতিহা / ব্যাকরণ intent। Online `Gemini` চালু থাকলে (`AiSettings.onlineEnabled` + `LIFEOS_GEMINI_KEY`) ফ্রি-প্রশ্নেও উত্তর; না থাকলে নিজেই offline-এ নামে। M11.2: `lib/services/deen_progress.dart` — ব্যক্তিগত প্রগ্রেস রেকর্ড (কোন ধাপে কতটুকু "জানি ✓", পরের ধাপ, আজকের প্রশ্ন-সংখ্যা; রেকর্ড — স্কোর নয়) + শিক্ষক স্ক্রিনে লাইভ প্রগ্রেস স্ট্রিপ।
+- `lib/screens/deen/speak_drill_screen.dart` + হাব কার্ড — M12 v1 "🗣️ বলে পড়ো" (self-check read-aloud): শব্দ / শব্দভাণ্ডার / ফাতিহা আয়াত; আরবি দেখে নিজে পড়ে বলা, পড়া/অর্থ পরেই খোলা, `said:<kind>:<id>` লোকাল রেকর্ড।
 - রিপো `manifest.json` + `content_store_screen` — কোন কোন সম্পদ আছে (version, count, source) + "আবার নামাও" (force re-download)। Loader: `ContentRepository` (`content_repository.dart`) — GitHub → strict-JSON validate → Hive ক্যাশ → offline।
 
 ---
