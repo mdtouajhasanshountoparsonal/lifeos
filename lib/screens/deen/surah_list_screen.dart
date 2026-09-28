@@ -16,6 +16,8 @@ class SurahListScreen extends StatefulWidget {
 
 class _SurahListScreenState extends State<SurahListScreen> {
   List<SurahItem>? _surahs;
+  final _searchController = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
@@ -23,10 +25,31 @@ class _SurahListScreenState extends State<SurahListScreen> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     final list = await DeenSeed.surahs();
     if (!mounted) return;
     setState(() => _surahs = list);
+  }
+
+  List<SurahItem> get _filtered {
+    final all = _surahs ?? const <SurahItem>[];
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return all;
+    return [
+      for (final s in all)
+        if (s.name.toLowerCase().contains(q) ||
+            s.nameMeaning.toLowerCase().contains(q) ||
+            s.arabicName.toLowerCase().contains(q) ||
+            s.revelation.toLowerCase().contains(q) ||
+            s.index.toString() == q)
+          s,
+    ];
   }
 
   String _bnNum(int n) {
@@ -70,8 +93,76 @@ class _SurahListScreenState extends State<SurahListScreen> {
                           color: c.textSecondary,
                         ),
                       ),
-                      const SizedBox(height: 14),
-                      for (final s in surahs) _tile(c, s),
+                      const SizedBox(height: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: c.cardColor,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (v) => setState(() => _query = v),
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            color: c.textPrimary,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: '🔍 নাম বা নাম্বার দিয়ে খুঁজো…',
+                            hintStyle: TextStyle(
+                              fontSize: 12.5,
+                              color: c.textSecondary,
+                            ),
+                            border: InputBorder.none,
+                            isDense: true,
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              size: 20,
+                              color: c.textSecondary,
+                            ),
+                            suffixIcon: _query.isEmpty
+                                ? null
+                                : IconButton(
+                                    icon: Icon(
+                                      Icons.close_rounded,
+                                      size: 18,
+                                      color: c.textSecondary,
+                                    ),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _query = '');
+                                    },
+                                  ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Text(
+                          '${_bnNum(_filtered.length)}টি দেখানো হচ্ছে',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: c.textSecondary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      if (_filtered.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 24),
+                          child: Center(
+                            child: Text(
+                              'কিছু পাওয়া যায়নি — অন্য নাম্বার/নাম দিয়ে দেখো',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: c.textSecondary,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        for (final s in _filtered) _tile(c, s),
                     ],
                   ),
           ),
