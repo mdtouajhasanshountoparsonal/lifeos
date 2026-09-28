@@ -1,0 +1,14 @@
+{
+  "bundleVersion": 1,
+  "repo": null,
+  "files": [
+    { "path": "assets/deen/arabic_letters.json", "kind": "অক্ষর", "version": 1, "count": 28, "source": "বান্ডল" },
+    { "path": "assets/deen/arabic_harakat.json", "kind": "হরকত", "version": 1, "count": 11, "source": "বান্ডল" },
+    { "path": "assets/deen/arabic_words.json", "kind": "শব্দ-অনুশীলন", "version": 1, "count": 37, "source": "বান্ডল" },
+    { "path": "assets/deen/quran_words.json", "kind": "কুরআন-শব্দ (ফাতিহা)", "version": 1, "count": 7, "source": "বান্ডল" },
+    { "path": "assets/deen/quran_vocab.json", "kind": "শব্দভাণ্ডার", "version": 1, "count": 19, "source": "বান্ডল" },
+    { "path": "assets/deen/root_words.json", "kind": "মূলধাতু", "version": 1, "count": 6, "source": "বান্ডল" },
+    { "path": "assets/deen/arabic_grammar.json", "kind": "ব্যাকরণ", "version": 1, "count": 7, "source": "বান্ডল" },
+    { "path": "assets/deen/surahs.json", "kind": "সূরা (৩৮টি, অনুবাদ+ট্রান্সলিটারেশন)", "version": 1, "count": 38, "source": "বান্ডল" }
+  ]
+}

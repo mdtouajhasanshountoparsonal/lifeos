@@ -1,0 +1,50 @@
+{
+  "_template": [
+    {
+      "id": "bab",
+      "arabic": "بَاب",
+      "reading": "বা-ব",
+      "bangla": "দরজা",
+      "source": "পরিচিত শব্দ"
+    }
+  ],
+  "words": [
+    { "id": "bab", "arabic": "بَاب", "reading": "বা-ব", "bangla": "দরজা", "source": "বাগান" },
+    { "id": "bayt", "arabic": "بَيْت", "reading": "বায়-ত", "bangla": "ঘর", "source": "কুরআন" },
+    { "id": "qalam", "arabic": "قَلَم", "reading": "ক্বা-লাম", "bangla": "কলম", "source": "কুরআন" },
+    { "id": "kitab", "arabic": "كِتَاب", "reading": "কি-তা-ব", "bangla": "বই", "source": "কুরআন" },
+    { "id": "masjid", "arabic": "مَسْجِد", "reading": "মাস-জি-দ", "bangla": "মসজিদ", "source": "কুরআন" },
+    { "id": "rajul", "arabic": "رَجُل", "reading": "রা-জুল", "bangla": "পুরুষ", "source": "কুরআন" },
+    { "id": "marah", "arabic": "مَرْءَة", "reading": "মার-আহ", "bangla": "নারী", "source": "কুরআন" },
+    { "id": "nur", "arabic": "نُور", "reading": "নূর", "bangla": "আলো", "source": "কুরআন" },
+    { "id": "ma", "arabic": "مَاء", "reading": "মা-আ", "bangla": "পানি", "source": "কুরআন" },
+    { "id": "ard", "arabic": "أَرْض", "reading": "আর-দ্ব", "bangla": "পৃথিবী", "source": "কুরআন" },
+    { "id": "sama", "arabic": "سَمَاء", "reading": "সা-মা", "bangla": "আকাশ", "source": "কুরআন" },
+    { "id": "layl", "arabic": "لَيْل", "reading": "লাইল", "bangla": "রাত", "source": "কুরআন" },
+    { "id": "nahar", "arabic": "نَهَار", "reading": "না-হার", "bangla": "দিন", "source": "কুরআন" },
+    { "id": "jamal", "arabic": "جَمَل", "reading": "জা-মাল", "bangla": "উট", "source": "কুরআন" },
+    { "id": "bahr", "arabic": "بَحْر", "reading": "বাহ-র", "bangla": "সমুদ্র", "source": "কুরআন" },
+    { "id": "jabal", "arabic": "جَبَل", "reading": "জা-বাল", "bangla": "পাহাড়", "source": "কুরআন" },
+    { "id": "sajarah", "arabic": "شَجَرَة", "reading": "শা-জা-রাহ", "bangla": "গাছ", "source": "কুরআন" },
+    { "id": "qamar", "arabic": "قَمَر", "reading": "ক্বা-মার", "bangla": "চাঁদ", "source": "কুরআন" },
+    { "id": "shams", "arabic": "شَمْس", "reading": "শামস", "bangla": "সূর্য", "source": "কুরআন" },
+    { "id": "tamaan", "arabic": "طَعَام", "reading": "ত্বা-‘আম", "bangla": "খাবার", "source": "কুরআন" },
+    { "id": "ilm", "arabic": "عِلْم", "reading": "‘ইল-ম", "bangla": "জ্ঞান", "source": "কুরআন" },
+    { "id": "sabr", "arabic": "صَبْر", "reading": "স্বব্র", "bangla": "ধৈর্য", "source": "কুরআন" },
+    { "id": "haqq", "arabic": "حَقّ", "reading": "হাক-ক্ব", "bangla": "সত্য", "source": "কুরআন" },
+    { "id": "din", "arabic": "دِين", "reading": "দীন", "bangla": "ধর্ম", "source": "কুরআন" },
+    { "id": "rahmah", "arabic": "رَحْمَة", "reading": "রাহ-মাহ", "bangla": "দয়া", "source": "কুরআন" },
+    { "id": "yad", "arabic": "يَد", "reading": "ইয়া-দ", "bangla": "হাত", "source": "কুরআন" },
+    { "id": "ayn", "arabic": "عَيْن", "reading": "‘আইন", "bangla": "চোখ", "source": "কুরআন" },
+    { "id": "qalb", "arabic": "قَلْب", "reading": "ক্বাল-ব", "bangla": "হৃদয়", "source": "কুরআন" },
+    { "id": "walad", "arabic": "وَلَد", "reading": "ওয়া-লাদ", "bangla": "ছেলে", "source": "কুরআন" },
+    { "id": "bint", "arabic": "بِنْت", "reading": "বিন-ত", "bangla": "মেয়ে", "source": "কুরআন" },
+    { "id": "ab", "arabic": "أَب", "reading": "আব", "bangla": "বাবা", "source": "কুরআন" },
+    { "id": "umm", "arabic": "أُمّ", "reading": "উম্ম", "bangla": "মা", "source": "কুরআন" },
+    { "id": "akh", "arabic": "أَخ", "reading": "আখ", "bangla": "ভাই", "source": "কুরআন" },
+    { "id": "ukht", "arabic": "أُخْت", "reading": "উখত", "bangla": "বোন", "source": "কুরআন" },
+    { "id": "kitabun", "arabic": "كِتَابٌ", "reading": "কি-তা-বু-ন", "bangla": "একটি বই", "source": "পাঠ্য" },
+    { "id": "alqalamu", "arabic": "الْقَلَمُ", "reading": "আল-ক্বা-লা-মু", "bangla": "কলমটি", "source": "পাঠ্য" },
+    { "id": "albaytu", "arabic": "الْبَيْتُ", "reading": "আল-বায়-তু", "bangla": "ঘরটি", "source": "পাঠ্য" }
+  ]
+}

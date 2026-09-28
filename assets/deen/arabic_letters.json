@@ -1,0 +1,48 @@
+{
+  "_template": [
+    {
+      "id": "ba",
+      "letter": "ب",
+      "name": "বা",
+      "reading": "ব",
+      "isolated": "ب",
+      "initial": "بـ",
+      "medial": "ـبـ",
+      "final": "ـب",
+      "example": "بَاب",
+      "exampleReading": "বা-ব",
+      "exampleBangla": "দরজা",
+      "connectsForward": true
+    }
+  ],
+  "letters": [
+    { "id": "alif", "letter": "ا", "name": "আলিফ", "reading": "আ", "isolated": "ا", "initial": "ـا", "medial": "ـا", "final": "ا", "example": "أَمِين", "exampleReading": "আ-মীন", "exampleBangla": "বিশ্বস্ত", "connectsForward": false },
+    { "id": "ba", "letter": "ب", "name": "বা", "reading": "ব", "isolated": "ب", "initial": "بـ", "medial": "ـبـ", "final": "ـب", "example": "بَاب", "exampleReading": "বা-ব", "exampleBangla": "দরজা", "connectsForward": true },
+    { "id": "ta", "letter": "ت", "name": "তা", "reading": "ত", "isolated": "ت", "initial": "تـ", "medial": "ـتـ", "final": "ـت", "example": "تِين", "exampleReading": "তীন", "exampleBangla": "ডুমুর", "connectsForward": true },
+    { "id": "tha", "letter": "ث", "name": "ছা", "reading": "ছ", "isolated": "ث", "initial": "ثـ", "medial": "ـثـ", "final": "ـث", "example": "ثَوْب", "exampleReading": "ছাওব", "exampleBangla": "কাপড়", "connectsForward": true },
+    { "id": "jim", "letter": "ج", "name": "জিম", "reading": "জ", "isolated": "ج", "initial": "جـ", "medial": "ـجـ", "final": "ـج", "example": "جَمَل", "exampleReading": "জা-মাল", "exampleBangla": "উট", "connectsForward": true },
+    { "id": "ha", "letter": "ح", "name": "হা (গলা-হ)", "reading": "হ", "isolated": "ح", "initial": "حـ", "medial": "ـحـ", "final": "ـح", "example": "حَقّ", "exampleReading": "হাক্ক", "exampleBangla": "সত্য", "connectsForward": true },
+    { "id": "kha", "letter": "خ", "name": "খা", "reading": "খ", "isolated": "خ", "initial": "خـ", "medial": "ـخـ", "final": "ـخ", "example": "خَبَر", "exampleReading": "খা-বার", "exampleBangla": "সংবাদ", "connectsForward": true },
+    { "id": "dal", "letter": "د", "name": "দাল", "reading": "দ", "isolated": "د", "initial": "ـد", "medial": "ـد", "final": "ـد", "example": "دِين", "exampleReading": "দীন", "exampleBangla": "ধর্ম", "connectsForward": false },
+    { "id": "dhal", "letter": "ذ", "name": "যাল", "reading": "য", "isolated": "ذ", "initial": "ـذ", "medial": "ـذ", "final": "ـذ", "example": "ذَهَب", "exampleReading": "যা-হাব", "exampleBangla": "সোনা", "connectsForward": false },
+    { "id": "ra", "letter": "ر", "name": "রা", "reading": "র", "isolated": "ر", "initial": "ـر", "medial": "ـر", "final": "ـر", "example": "رَحْمَة", "exampleReading": "রাহ-মাহ", "exampleBangla": "দয়া", "connectsForward": false },
+    { "id": "zay", "letter": "ز", "name": "যায়", "reading": "য", "isolated": "ز", "initial": "ـز", "medial": "ـز", "final": "ـز", "example": "زَيْت", "exampleReading": "যায়-ত", "exampleBangla": "তেল", "connectsForward": false },
+    { "id": "sin", "letter": "س", "name": "সিন", "reading": "স", "isolated": "س", "initial": "سـ", "medial": "ـسـ", "final": "ـس", "example": "سَمَاء", "exampleReading": "সা-মা", "exampleBangla": "আকাশ", "connectsForward": true },
+    { "id": "shin", "letter": "ش", "name": "শিন", "reading": "শ", "isolated": "ش", "initial": "شـ", "medial": "ـشـ", "final": "ـش", "example": "شَمْس", "exampleReading": "শামস", "exampleBangla": "সূর্য", "connectsForward": true },
+    { "id": "sad", "letter": "ص", "name": "স্বাদ", "reading": "স (মোটা)", "isolated": "ص", "initial": "صـ", "medial": "ـصـ", "final": "ـص", "example": "صَبْر", "exampleReading": "স্বব্র", "exampleBangla": "ধৈর্য", "connectsForward": true },
+    { "id": "dad", "letter": "ض", "name": "দ্বাদ", "reading": "দ (মোটা)", "isolated": "ض", "initial": "ضـ", "medial": "ـضـ", "final": "ـض", "example": "ضَوْء", "exampleReading": "দ্বাউ", "exampleBangla": "আলো", "connectsForward": true },
+    { "id": "ta2", "letter": "ط", "name": "ত্বা", "reading": "ত (মোটা)", "isolated": "ط", "initial": "طـ", "medial": "ـطـ", "final": "ـط", "example": "طَعَام", "exampleReading": "ত্বা-‘আম", "exampleBangla": "খাবার", "connectsForward": true },
+    { "id": "za2", "letter": "ظ", "name": "য্বা", "reading": "য (মোটা)", "isolated": "ظ", "initial": "ظـ", "medial": "ـظـ", "final": "ـظ", "example": "ظُهْر", "exampleReading": "য্বুহর", "exampleBangla": "দুপুর", "connectsForward": true },
+    { "id": "ain", "letter": "ع", "name": "‘আইন", "reading": "আ (গলা থেকে)", "isolated": "ع", "initial": "عـ", "medial": "ـعـ", "final": "ـع", "example": "عِلْم", "exampleReading": "‘ইলম", "exampleBangla": "জ্ঞান", "connectsForward": true },
+    { "id": "ghain", "letter": "غ", "name": "গাইন", "reading": "গ (গলা থেকে)", "isolated": "غ", "initial": "غـ", "medial": "ـغـ", "final": "ـغ", "example": "غَنَم", "exampleReading": "গা-নাম", "exampleBangla": "ভেড়া", "connectsForward": true },
+    { "id": "fa", "letter": "ফা", "name": "ফা", "reading": "ফ", "isolated": "ف", "initial": "فـ", "medial": "ـفـ", "final": "ـف", "example": "فَلَق", "exampleReading": "ফা-লাক্ব", "exampleBangla": "ভোর", "connectsForward": true },
+    { "id": "qaf", "letter": "ق", "name": "ক্বাফ", "reading": "ক (গলা থেকে)", "isolated": "ق", "initial": "قـ", "medial": "ـقـ", "final": "ـق", "example": "قَلَم", "exampleReading": "ক্বা-লাম", "exampleBangla": "কলম", "connectsForward": true },
+    { "id": "kaf", "letter": "ك", "name": "কাফ", "reading": "ক", "isolated": "ك", "initial": "كـ", "medial": "ـكـ", "final": "ـك", "example": "كِتَاب", "exampleReading": "কি-তা-ব", "exampleBangla": "বই", "connectsForward": true },
+    { "id": "lam", "letter": "ل", "name": "লাম", "reading": "ল", "isolated": "ل", "initial": "لـ", "medial": "ـلـ", "final": "ـل", "example": "لَيْل", "exampleReading": "লাইল", "exampleBangla": "রাত", "connectsForward": true },
+    { "id": "mim", "letter": "م", "name": "মিম", "reading": "ম", "isolated": "م", "initial": "مـ", "medial": "ـمـ", "final": "ـم", "example": "مَسْجِد", "exampleReading": "মাস-জি-দ", "exampleBangla": "মসজিদ", "connectsForward": true },
+    { "id": "nun", "letter": "ن", "name": "নুন", "reading": "ন", "isolated": "ن", "initial": "نـ", "medial": "ـنـ", "final": "ـن", "example": "نُور", "exampleReading": "নূর", "exampleBangla": "আলো", "connectsForward": true },
+    { "id": "ha2", "letter": "ه", "name": "হা", "reading": "হ", "isolated": "ه", "initial": "هـ", "medial": "ـهـ", "final": "ـه", "example": "هُدًى", "exampleReading": "হু-দা", "exampleBangla": "হেদায়েত", "connectsForward": true },
+    { "id": "waw", "letter": "و", "name": "ওয়াও", "reading": "ও/উ (ঠোঁট)", "isolated": "و", "initial": "ـو", "medial": "ـو", "final": "ـو", "example": "وَقْت", "exampleReading": "ওয়াক্ত", "exampleBangla": "সময়", "connectsForward": false },
+    { "id": "ya", "letter": "ي", "name": "ইয়া", "reading": "ই/য", "isolated": "ي", "initial": "يـ", "medial": "ـيـ", "final": "ـي", "example": "يَد", "exampleReading": "ইয়া-দ", "exampleBangla": "হাত", "connectsForward": true }
+  ]
+}
