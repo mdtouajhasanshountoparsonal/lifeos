@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lifeos/services/arabic_teacher.dart';
+import 'package:lifeos/services/deen_progress.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
 import 'package:lifeos/widgets/moon_background.dart';
@@ -22,17 +26,48 @@ class ArabicTeacherScreen extends StatefulWidget {
 class _ArabicTeacherScreenState extends State<ArabicTeacherScreen> {
   final _controller = TextEditingController();
   final _messages = <_Msg>[
-    _Msg.bot(const TeacherReply(
-      title: 'আসসালামু আলাইকুম 👋',
-      body: 'তুমি প্রশ্ন করো, আমি অফলাইনে নিজের বাক্স থেকে উত্তর দিই; ইন্টারনেট + Gemini চালু থাকলে আরও বিস্তারিত।\nউদাহরণ: "rhahman মানে কী?", "كِتَاب কী?", "কীভাবে শুরু করব?"',
-    )),
+    _Msg.bot(
+      const TeacherReply(
+        title: 'আসসালামু আলাইকুম 👋',
+        body: 'তুমি প্রশ্ন করো, আমি অফলাইনে নিজের বাক্স থেকে উত্তর দিই; ইন্টারনেট + Gemini চালু থাকলে আরও বিস্তারিত।\nউদাহরণ: "rhahman মানে কী?", "كِتَاب কী?", "কীভাবে শুরু করব?", "আমার প্রগ্রেস কী?"',
+      ),
+    ),
   ];
   bool _busy = false;
+  DeenProgressSummary? _summary;
+  StreamSubscription<dynamic>? _boxSub;
 
-  final _chips = const ['কীভাবে শুরু করব?', 'رَحْمَة মানে?', 'فَتْحَة কী?', 'صبْر মানে?', 'سورَۃ الفاتحة বলো', 'ব্যাকরণ কী?'];
+  final _chips = const [
+    'কীভাবে শুরু করব?',
+    'رَحْمَة মানে?',
+    'فَتْحَة কী?',
+    'صبْر মানে?',
+    'سورَۃ الفاتحة বলো',
+    'ব্যাকরণ কী?',
+    '📈 আমার প্রগ্রেস',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshProgress();
+    try {
+      _boxSub = Hive.box('deen_arabic')
+          .watch()
+          .listen((_) => _refreshProgress());
+    } catch (_) {}
+  }
+
+  Future<void> _refreshProgress() async {
+    try {
+      final s = await DeenProgress.summary();
+      if (mounted) setState(() => _summary = s);
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
+    _boxSub?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -67,8 +102,16 @@ class _ArabicTeacherScreenState extends State<ArabicTeacherScreen> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Text('🧑‍🏫 আরবি শিক্ষক', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: c.textPrimary)),
+                    child: Text(
+                      '🧑‍🏫 আরবি শিক্ষক',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: c.textPrimary,
+                      ),
+                    ),
                   ),
+                  if (_summary != null) _progressStrip(c),
                   SizedBox(
                     height: 44,
                     child: ListView.separated(
@@ -77,7 +120,14 @@ class _ArabicTeacherScreenState extends State<ArabicTeacherScreen> {
                       itemCount: _chips.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 8),
                       itemBuilder: (context, i) => ActionChip(
-                        label: Text(_chips[i], style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: c.glow)),
+                        label: Text(
+                          _chips[i],
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: c.glow,
+                          ),
+                        ),
                         side: BorderSide(color: c.glow.withValues(alpha: 0.4)),
                         backgroundColor: c.glow.withValues(alpha: 0.08),
                         onPressed: () => _send(_chips[i]),
@@ -88,7 +138,8 @@ class _ArabicTeacherScreenState extends State<ArabicTeacherScreen> {
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                       itemCount: _messages.length,
-                      itemBuilder: (context, i) => _messageBubble(c, _messages[i]),
+                      itemBuilder: (context, i) =>
+                          _messageBubble(c, _messages[i]),
                     ),
                   ),
                   if (_busy)
@@ -97,27 +148,49 @@ class _ArabicTeacherScreenState extends State<ArabicTeacherScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                           const SizedBox(width: 8),
-                          Text('ভাবছি…', style: TextStyle(fontSize: 12, color: c.textSecondary)),
+                          Text(
+                            'ভাবছি…',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: c.textSecondary,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   Container(
                     margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: c.cardColor, borderRadius: BorderRadius.circular(26)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: c.cardColor,
+                      borderRadius: BorderRadius.circular(26),
+                    ),
                     child: Row(
                       children: [
                         Expanded(
                           child: TextField(
                             controller: _controller,
-                            style: TextStyle(fontSize: 13.5, color: c.textPrimary),
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              color: c.textPrimary,
+                            ),
                             textInputAction: TextInputAction.send,
                             onSubmitted: (_) => _send(),
                             decoration: InputDecoration(
                               hintText: 'বাংলায় প্রশ্ন লিখুন…',
-                              hintStyle: TextStyle(fontSize: 13, color: c.textSecondary),
+                              hintStyle: TextStyle(
+                                fontSize: 13,
+                                color: c.textSecondary,
+                              ),
                               border: InputBorder.none,
                               isDense: true,
                             ),
@@ -140,6 +213,42 @@ class _ArabicTeacherScreenState extends State<ArabicTeacherScreen> {
     );
   }
 
+  Widget _progressStrip(AppColors c) {
+    final s = _summary!;
+    final parts = <String>[
+      for (final m in s.modules)
+        m.countOnly
+            ? '${m.name} ${_bn(m.known)}'
+            : '${m.name} ${_bn(m.known)}/${_bn(m.total)}',
+    ];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '📈 আমার রেকর্ড · ${parts.join(' · ')}',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 11, height: 1.5, color: c.lowPriority),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ActionChip(
+            label: const Text(
+              'বিস্তারিত',
+              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800),
+            ),
+            side: BorderSide(color: c.lowPriority.withValues(alpha: 0.5)),
+            backgroundColor: c.lowPriority.withValues(alpha: 0.1),
+            visualDensity: VisualDensity.compact,
+            onPressed: () => _send('📈 আমার প্রগ্রেস'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _messageBubble(AppColors c, _Msg m) {
     if (m.fromUser) {
       return Align(
@@ -147,9 +256,22 @@ class _ArabicTeacherScreenState extends State<ArabicTeacherScreen> {
         child: Container(
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(color: c.secondary.withValues(alpha: 0.9), borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(16), topRight: Radius.circular(16), bottomLeft: Radius.circular(16))),
-          child: Text(m.text, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Colors.white)),
+          decoration: BoxDecoration(
+            color: c.secondary.withValues(alpha: 0.9),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+              bottomLeft: Radius.circular(16),
+            ),
+          ),
+          child: Text(
+            m.text,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
         ),
       );
     }
@@ -159,7 +281,10 @@ class _ArabicTeacherScreenState extends State<ArabicTeacherScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         width: double.maxFinite,
-        decoration: BoxDecoration(color: c.cardColor, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(
+          color: c.cardColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,25 +293,69 @@ class _ArabicTeacherScreenState extends State<ArabicTeacherScreen> {
               children: [
                 const Text('🧑‍🏫 ', style: TextStyle(fontSize: 14)),
                 Expanded(
-                  child: Text(r.title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: c.textPrimary)),
+                  child: Text(
+                    r.title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: c.textPrimary,
+                    ),
+                  ),
                 ),
                 if (r.fromGemini)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(color: c.glow.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(7)),
-                    child: Text('🌐 Gemini', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: c.glow)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: c.glow.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Text(
+                      '🌐 Gemini',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: c.glow,
+                      ),
+                    ),
                   ),
               ],
             ),
             if (r.arabic != null) ...[
               const SizedBox(height: 8),
-              Text(r.arabic!, textAlign: TextAlign.right, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: c.textPrimary, height: 1.4)),
+              Text(
+                r.arabic!,
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: c.textPrimary,
+                  height: 1.4,
+                ),
+              ),
             ],
             const SizedBox(height: 6),
-            Text(r.body, style: TextStyle(fontSize: 12.5, height: 1.6, color: c.textSecondary)),
+            Text(
+              r.body,
+              style: TextStyle(
+                fontSize: 12.5,
+                height: 1.6,
+                color: c.textSecondary,
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  static String _bn(int n) {
+    const digits = '০১২৩৪৫৬৭৮৯';
+    return n.toString().split('').map((ch) {
+      final i = ch.codeUnitAt(0);
+      return i >= 0x30 && i <= 0x39 ? digits[i - 0x30] : ch;
+    }).join();
   }
 }

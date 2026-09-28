@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:lifeos/services/ai_settings.dart';
 import 'package:lifeos/services/arabic_seed.dart';
+import 'package:lifeos/services/deen_progress.dart';
 
 /// আরবি শিক্ষকের উত্তর — offline/local data প্রথমে, ইচ্ছা হলে Gemini।
 class TeacherReply {
@@ -28,8 +29,12 @@ class ArabicTeacher {
   static Future<TeacherReply> ask(String question, {String? geminiKey}) async {
     final q = question.trim();
     if (q.isEmpty) {
-      return const TeacherReply(title: 'কী প্রশ্ন?', body: 'আরবি পড়া, শব্দ, ব্যাকরণ — কিছু লিখুন।');
+      return const TeacherReply(
+        title: 'কী প্রশ্ন?',
+        body: 'আরবি পড়া, শব্দ, ব্যাকরণ — কিছু লিখুন।',
+      );
     }
+    DeenProgress.recordQuestion();
     await AiSettings.init();
     final key = (geminiKey != null && geminiKey.isNotEmpty)
         ? geminiKey
@@ -55,22 +60,27 @@ class ArabicTeacher {
 
     // 1) হরকত
     for (final h in harakat) {
-      if (t.contains(h.name.toLowerCase()) || t.contains(h.reading.toLowerCase())) {
+      if (t.contains(h.name.toLowerCase()) ||
+          t.contains(h.reading.toLowerCase())) {
         return TeacherReply(
           title: '${h.name} — ${h.bangla}',
           arabic: h.mark,
-          body: 'উচ্চারণ: ${h.reading}\n\n${h.bangla}\n\nবর্ণমালা পড়তে গেলে প্রথমে অক্ষর চেনা, তারপর এই ছোট চিহ্নগুলো — হরকত — যোগ হয়ে শব্দ হয়।',
+          body:
+              'উচ্চারণ: ${h.reading}\n\n${h.bangla}\n\nবর্ণমালা পড়তে গেলে প্রথমে অক্ষর চেনা, তারপর এই ছোট চিহ্নগুলো — হরকত — যোগ হয়ে শব্দ হয়।',
         );
       }
     }
 
     // 2) অক্ষর
     for (final l in letters) {
-      if (t.contains(l.name.toLowerCase()) || t.contains(l.reading.toLowerCase()) || (l.example.isNotEmpty && t.contains(l.example))) {
+      if (t.contains(l.name.toLowerCase()) ||
+          t.contains(l.reading.toLowerCase()) ||
+          (l.example.isNotEmpty && t.contains(l.example))) {
         return TeacherReply(
           title: 'অক্ষর: ${l.name} (${l.reading})',
           arabic: l.example,
-          body: 'শুরু-মধ্য-শেষ রূপ ভিন্ন হয়। উদাহরণ শব্দ: ${l.example} → "${l.exampleReading}" — মানে ${l.exampleBangla}।\n\nঅনুশীলন: আলফাবেট শিখা-তে প্রতিটি অক্ষরের ৪ রূপ দেখুন।',
+          body:
+              'শুরু-মধ্য-শেষ রূপ ভিন্ন হয়। উদাহরণ শব্দ: ${l.example} → "${l.exampleReading}" — মানে ${l.exampleBangla}।\n\nঅনুশীলন: আলফাবেট শিখা-তে প্রতিটি অক্ষরের ৪ রূপ দেখুন।',
         );
       }
     }
@@ -81,30 +91,64 @@ class ArabicTeacher {
           t.contains(v.bangla.toLowerCase()) ||
           (v.arabic.isNotEmpty && t.contains(v.arabic))) {
         final occ = v.occurrences
-            .map((o) => '• ${o.surahName} ${o.surah}:${o.ayah} — ${o.arabic} → ${o.bangla}')
+            .map(
+              (o) =>
+                  '• ${o.surahName} ${o.surah}:${o.ayah} — ${o.arabic} → ${o.bangla}',
+            )
             .join('\n');
         return TeacherReply(
           title: '${v.arabic} — ${v.reading}',
           arabic: v.arabic,
-          body: 'অর্থ: ${v.bangla}\nমূলধাতু: ${v.root}\n\nকুরআনে যেখানে এসেছে:\n${occ.isEmpty ? '—' : occ}\n\nএটা "শব্দভাণ্ডার" মডিউলে "জানি ✓" করে রাখুন।',
+          body:
+              'অর্থ: ${v.bangla}\nমূলধাতু: ${v.root}\n\nকুরআনে যেখানে এসেছে:\n${occ.isEmpty ? '—' : occ}\n\nএটা "শব্দভাণ্ডার" মডিউলে "জানি ✓" করে রাখুন।',
         );
       }
     }
 
     // 4) মূলধাতু
     for (final r in roots) {
-      if (t.contains(r.rootMeaning.toLowerCase()) || t.contains(r.root.replaceAll(' ', ''))) {
-        final branches = r.derived.map((d) => '• ${d.arabic} (${d.reading}) — ${d.bangla}').join('\n');
+      if (t.contains(r.rootMeaning.toLowerCase()) ||
+          t.contains(r.root.replaceAll(' ', ''))) {
+        final branches = r.derived
+            .map((d) => '• ${d.arabic} (${d.reading}) — ${d.bangla}')
+            .join('\n');
         return TeacherReply(
           title: 'মূলধাতু: ${r.root} — “${r.rootMeaning}”',
           arabic: r.root,
-          body: 'এক শিকড় থেকে বড় হওয়া শব্দগুলো:\n$branches\n\nআরবি শব্দের শিকড় চেনা = শব্দের ভেতর ঢোকার চাবি।',
+          body:
+              'এক শিকড় থেকে বড় হওয়া শব্দগুলো:\n$branches\n\nআরবি শব্দের শিকড় চেনা = শব্দের ভেতর ঢোকার চাবি।',
         );
       }
     }
 
+    // 4½) ব্যক্তিগত প্রগ্রেস (M11.2 — রেকর্ড, বিচার নয়)
+    if (t.contains('প্রগ্রেস') ||
+        t.contains('progress') ||
+        t.contains('পরিসংখ্যান') ||
+        t.contains('কতটুকু') ||
+        t.contains('কোন ধাপ') ||
+        t.contains('আমার রেকর্ড')) {
+      final s = await DeenProgress.summary();
+      final lines = [
+        for (final m in s.modules)
+          m.countOnly
+              ? '• ${m.name}: ${_bn(m.known)}'
+              : '• ${m.name}: ${_bn(m.known)} / ${_bn(m.total)}',
+      ].join('\n');
+      return TeacherReply(
+        title: 'আপনার প্রগ্রেস — রেকর্ড',
+        body:
+            '$lines\n\n🎯 পরের ধাপ: ${s.nextStep}\n📝 আজ শিক্ষকের কাছে ${_bn(s.questionsToday)} বার প্রশ্ন করেছেন।\n\nরেকর্ড — বিচার নয়। নিজের গতিতে এগোন।',
+      );
+    }
+
     // 5) দিকনির্দেশনা
-    if (t.contains('start') || t.contains('শুরু') || t.contains('কীভাবে') || t.contains('কোথা') || t.contains('plan') || t.contains('beaten')) {
+    if (t.contains('start') ||
+        t.contains('শুরু') ||
+        t.contains('কীভাবে') ||
+        t.contains('কোথা') ||
+        t.contains('plan') ||
+        t.contains('beaten')) {
       return const TeacherReply(
         title: 'আরবি পড়া শেখার পথ',
         body: '১) অক্ষর চেনা (২৮টি — আলফাবেট) →\n২) হরকত (ফাতহা-কাসরা-দাম্মা) →\n৩) ছোট শব্দ পড়া →\n৪) কুরআনের শব্দ (সূরা ফাতিহা) →\n৫) শব্দভাণ্ডার + মূলধাতু + ব্যাকরণ।\n\nপ্রতিটি ধাপে "রেকর্ড — স্কোর নয়", নিজের গতিতে।',
@@ -130,6 +174,14 @@ class ArabicTeacher {
     );
   }
 
+  static String _bn(int n) {
+    const digits = '০১২৩৪৫৬৭৮৯';
+    return n.toString().split('').map((ch) {
+      final i = ch.codeUnitAt(0);
+      return i >= 0x30 && i <= 0x39 ? digits[i - 0x30] : ch;
+    }).join();
+  }
+
   static const _system = '''
 তুমি একজন ধৈর্যশীল আরবি শিক্ষক, যিনি একজন বাংলাভাষী নতুন শিক্ষার্থীকে কুরআন পড়ার জন্য আরবি পড়া শেখাচ্ছেন।
 নিয়ম:
@@ -139,23 +191,27 @@ class ArabicTeacher {
 ''';
 
   static Future<TeacherReply> _askGemini(String q, String key) async {
-    final client = HttpClient()..connectionTimeout = const Duration(seconds: 20);
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 20);
     try {
       final uri = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${Uri.encodeQueryComponent(key)}');
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${Uri.encodeQueryComponent(key)}',
+      );
       final req = await client.postUrl(uri);
       req.headers.contentType = ContentType.json;
-      req.write(jsonEncode({
-        'contents': [
-          {
-            'role': 'user',
-            'parts': [
-              {'text': '$_system\n\nছাত্রের প্রশ্ন: $q'},
-            ],
-          }
-        ],
-        'generationConfig': {'temperature': 0.6},
-      }));
+      req.write(
+        jsonEncode({
+          'contents': [
+            {
+              'role': 'user',
+              'parts': [
+                {'text': '$_system\n\nছাত্রের প্রশ্ন: $q'},
+              ],
+            },
+          ],
+          'generationConfig': {'temperature': 0.6},
+        }),
+      );
       final res = await req.close();
       if (res.statusCode != 200) {
         throw SocketException('gemini http ${res.statusCode}');
@@ -166,7 +222,11 @@ class ArabicTeacher {
       if (text is! String || text.trim().isEmpty) {
         throw const FormatException('gemini empty');
       }
-      return TeacherReply(title: 'Gemini-এর উত্তর', body: text.trim(), fromGemini: true);
+      return TeacherReply(
+        title: 'Gemini-এর উত্তর',
+        body: text.trim(),
+        fromGemini: true,
+      );
     } finally {
       client.close(force: true);
     }

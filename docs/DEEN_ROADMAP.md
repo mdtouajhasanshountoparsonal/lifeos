@@ -61,7 +61,7 @@ GitHub JSON → Downloader → Validator → Local DB → Repository → Offline
 | **M8** | **Root word system** | ক-ত-ব → كتب/كتاب/كاتب… tree | ✅ |
 | M9 | Content updater | অ্যাপ-বাইরে GitHub রিপো (`islamic_data`) → first-run ডাউনলোড → offline Hive | 🚧 রিপো push ও first-run টেস্ট বাকি |
 | **M10** | **Grammar** | Noun/Verb/Particle → Gender → Number → Case → Sentence role, বাংলায় | ✅ |
-| **M11** | **AI Teacher** | offline প্রশ্ন-উত্তর (সেভ করা content), Gemini চালু থাকলে আরও (M11.1 শেষ; grading/ব্যক্তিগত প্রগ্রেস M11.2) | 🚧 |
+| **M11** | **AI Teacher** | offline প্রশ্ন-উত্তর (সেভ করা content), Gemini চালু থাকলে আরও (M11.1 ✅; M11.2 ✅ — ব্যক্তিগত প্রগ্রেস রেকর্ড: কোন ধাপে কতটুকু "জানি ✓", পরের ধাপের পরামর্শ, আজকের প্রশ্ন-সংখ্যা, রেকর্ড — স্কোর নয়) | ✅ |
 | M12 | Speaking/Listening | বাক্য বলো → Gemini/পরিবেশে চেক, dashnote: dedicated speech tech ছাড়া pronunciation judge নয় | ⏳ |
 
 ---
