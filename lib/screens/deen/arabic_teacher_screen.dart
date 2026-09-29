@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:lifeos/screens/deen/weakness_challenge_screen.dart';
 import 'package:lifeos/services/arabic_teacher.dart';
 import 'package:lifeos/services/deen_progress.dart';
+import 'package:lifeos/services/deen_store.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
+import 'package:lifeos/widgets/entrance_item.dart';
 import 'package:lifeos/widgets/moon_background.dart';
 
 class _Msg {
@@ -35,6 +38,7 @@ class _ArabicTeacherScreenState extends State<ArabicTeacherScreen> {
   ];
   bool _busy = false;
   DeenProgressSummary? _summary;
+  int _hardCount = 0;
   StreamSubscription<dynamic>? _boxSub;
 
   final _chips = const [
@@ -61,7 +65,16 @@ class _ArabicTeacherScreenState extends State<ArabicTeacherScreen> {
   Future<void> _refreshProgress() async {
     try {
       final s = await DeenProgress.summary();
-      if (mounted) setState(() => _summary = s);
+      var h = 0;
+      try {
+        h = DeenStore.arabicHard().length;
+      } catch (_) {}
+      if (mounted) {
+        setState(() {
+          _summary = s;
+          _hardCount = h;
+        });
+      }
     } catch (_) {}
   }
 
@@ -117,21 +130,53 @@ class _ArabicTeacherScreenState extends State<ArabicTeacherScreen> {
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       scrollDirection: Axis.horizontal,
-                      itemCount: _chips.length,
+                      itemCount: _chips.length + 1,
                       separatorBuilder: (_, _) => const SizedBox(width: 8),
-                      itemBuilder: (context, i) => ActionChip(
-                        label: Text(
-                          _chips[i],
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            color: c.glow,
+                      itemBuilder: (context, i) {
+                        if (i == 0) {
+                          return ActionChip(
+                            avatar: Icon(
+                              Icons.bolt_rounded,
+                              size: 15,
+                              color: c.highPriority,
+                            ),
+                            label: Text(
+                              _hardCount > 0
+                                  ? '🎯 অনুশীলন — দুর্বলতা $_hardCount'
+                                  : '🎯 অনুশীলন — দুর্বলতা',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                                color: c.highPriority,
+                              ),
+                            ),
+                            side: BorderSide(
+                              color: c.highPriority.withValues(alpha: 0.5),
+                            ),
+                            backgroundColor: c.highPriority.withValues(
+                              alpha: 0.1,
+                            ),
+                            onPressed: () => Navigator.of(
+                              context,
+                            ).push(FadeRoute(const WeaknessChallengeScreen())),
+                          );
+                        }
+                        return ActionChip(
+                          label: Text(
+                            _chips[i - 1],
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: c.glow,
+                            ),
                           ),
-                        ),
-                        side: BorderSide(color: c.glow.withValues(alpha: 0.4)),
-                        backgroundColor: c.glow.withValues(alpha: 0.08),
-                        onPressed: () => _send(_chips[i]),
-                      ),
+                          side: BorderSide(
+                            color: c.glow.withValues(alpha: 0.4),
+                          ),
+                          backgroundColor: c.glow.withValues(alpha: 0.08),
+                          onPressed: () => _send(_chips[i - 1]),
+                        );
+                      },
                     ),
                   ),
                   Expanded(
