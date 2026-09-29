@@ -117,7 +117,23 @@ class AdhkarItem {
   bool get isEvening => time == 'evening' || time == 'both';
 }
 
-/// 📖 একটি ছোট সুরার item (সূরা ফাতিহা + জুয 'আম্মা)।
+/// 📖 একটি সুরার item (সূরা ফাতিহা + জুয 'আম্মা + সব)।
+class SurahAyah {
+  final int n;
+  final String ar;
+  final String bn;
+
+  /// বাংলা-বানানে পড়া (স্বয়ংক্রিয় মেকানিক্যাল ট্রান্সলিটারেশন)।
+  final String tl;
+
+  const SurahAyah({
+    required this.n,
+    required this.ar,
+    required this.bn,
+    this.tl = '',
+  });
+}
+
 class SurahItem {
   final String id;
   final int index;
@@ -130,6 +146,7 @@ class SurahItem {
   final String arabic;
   final String bangla;
   final String transliteration;
+  final List<SurahAyah> ayahs;
 
   const SurahItem({
     required this.id,
@@ -143,6 +160,7 @@ class SurahItem {
     required this.arabic,
     required this.bangla,
     required this.transliteration,
+    this.ayahs = const [],
   });
 
   /// সুরার সোর্স সবসময় থাকে — কুরআন।
@@ -313,6 +331,15 @@ class DeenSeed {
           arabic: (m?['arabic'] as String? ?? '').trim(),
           bangla: (m?['bangla'] as String? ?? '').trim(),
           transliteration: (m?['transliteration'] as String? ?? '').trim(),
+          ayahs: [
+            for (final a in (m?['ayahs'] as List? ?? const []))
+              SurahAyah(
+                n: ((a as Map<String, dynamic>)['n'] as num?)?.toInt() ?? 0,
+                ar: (a['ar'] as String? ?? '').trim(),
+                bn: (a['bn'] as String? ?? '').trim(),
+                tl: (a['tl'] as String? ?? '').trim(),
+              ),
+          ],
         ),
       );
     }

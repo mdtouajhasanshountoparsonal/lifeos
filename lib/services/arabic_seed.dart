@@ -231,6 +231,21 @@ class ArabicSeed {
   static List<RootItem>? _roots;
   static List<GrammarLessonItem>? _grammar;
   static List<ContentFileItem>? _manifest;
+  static Map<String, Map<String, String>>? _lettersQuran;
+
+  /// কুরআন থেকে বাস্তব অক্ষর-উদাহরণ (letters_quran.json) — per letter।
+  static Future<Map<String, Map<String, String>>> lettersQuran() async {
+    if (_lettersQuran != null) return _lettersQuran!;
+    final data =
+        (await ContentRepository.loadMap('arabic/letters_quran.json')) ??
+        <String, dynamic>{};
+    final out = <String, Map<String, String>>{};
+    data.forEach((k, v) {
+      out[k] = (v as Map).map((a, b) => MapEntry(a.toString(), b.toString()));
+    });
+    _lettersQuran = out;
+    return out;
+  }
 
   static Future<List<ArabicLetterItem>> letters() async {
     if (_letters != null) return _letters!;

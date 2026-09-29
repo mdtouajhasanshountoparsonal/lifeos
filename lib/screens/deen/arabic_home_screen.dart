@@ -6,6 +6,7 @@ import 'package:lifeos/screens/deen/arabic_words_screen.dart';
 import 'package:lifeos/screens/deen/arabic_teacher_screen.dart';
 import 'package:lifeos/screens/deen/content_store_screen.dart';
 import 'package:lifeos/screens/deen/grammar_screen.dart';
+import 'package:lifeos/screens/deen/hard_words_screen.dart';
 import 'package:lifeos/screens/deen/quran_words_screen.dart';
 import 'package:lifeos/screens/deen/root_words_screen.dart';
 import 'package:lifeos/screens/deen/speak_drill_screen.dart';
@@ -94,7 +95,7 @@ class _ArabicHomeScreenState extends State<ArabicHomeScreen> {
                 _moduleCard(
                   c,
                   emoji: '📖',
-                  title: 'শব্দ পড়া ($_bn(_words))',
+                  title: 'শব্দ পড়া (${_bn(_words)})',
                   subtitle: 'ছোট শব্দ পড়ে "জানি ✓" চিহ্ন দাও',
                   color: c.primary,
                   onTap: () =>
@@ -151,6 +152,24 @@ class _ArabicHomeScreenState extends State<ArabicHomeScreen> {
                       Navigator.of(context)
                           .push(FadeRoute(const ArabicTeacherScreen())),
                 ),
+                ListenableBuilder(
+                  listenable: Hive.box('deen_arabic').listenable(),
+                  builder: (context, _) {
+                    final hard = DeenStore.arabicHard().length;
+                    return _moduleCard(
+                      c,
+                      emoji: '🩹',
+                      title: 'কঠিন শব্দ — আরও মুখস্থ',
+                      subtitle: hard > 0
+                          ? '${_bn(hard)}টি কঠিন চিহ্নিত — এখানে এসে বারবার দেখো'
+                          : 'পড়ার সময় কোনো শব্দ আটকালে ⚠️ (কঠিন) চিহ্ন দাও',
+                      color: c.highPriority,
+                      onTap: () =>
+                          Navigator.of(context)
+                              .push(FadeRoute(const HardWordsScreen())),
+                    );
+                  },
+                ),
                 _moduleCard(
                   c,
                   emoji: '🗣️',
@@ -197,6 +216,7 @@ class _ArabicHomeScreenState extends State<ArabicHomeScreen> {
       listenable: Hive.box('deen_arabic').listenable(),
       builder: (context, _) {
         final known = DeenStore.arabicKnown().length;
+        final hard = DeenStore.arabicHard().length;
         final total = _words > 0 ? _words : 1;
         final pct = (known / total).clamp(0.0, 1.0);
         return GlassCard(
@@ -226,7 +246,7 @@ class _ArabicHomeScreenState extends State<ArabicHomeScreen> {
                       borderRadius: BorderRadius.circular(9),
                     ),
                     child: Text(
-                      '$_bn(known) / $_bn(total) শব্দ',
+                      '${_bn(known)} ✓ · ${_bn(hard)} কঠিন',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,

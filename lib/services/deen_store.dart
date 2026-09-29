@@ -11,8 +11,10 @@ enum SalahMode {
 
   static SalahMode? fromKey(String? k) {
     if (k == null) return null;
-    return SalahMode.values.firstWhere((m) => m.name == k,
-        orElse: () => SalahMode.alone);
+    return SalahMode.values.firstWhere(
+      (m) => m.name == k,
+      orElse: () => SalahMode.alone,
+    );
   }
 }
 
@@ -25,9 +27,9 @@ class SalahEntry {
   bool get done => mode != null && ts != null;
 
   Map<String, dynamic> toMap() => {
-        'mode': mode?.name,
-        'ts': ts?.toIso8601String(),
-      };
+    'mode': mode?.name,
+    'ts': ts?.toIso8601String(),
+  };
 
   factory SalahEntry.fromMap(Map<dynamic, dynamic>? m) {
     if (m == null) return const SalahEntry();
@@ -40,13 +42,7 @@ class SalahEntry {
 
 /// DEEN মডিউলের store — শুধু নতুন boxes, কোনো পুরোনো ফাইল স্পর্শ করে না।
 class DeenStore {
-  static const prayers = <String>[
-    'fajr',
-    'dhuhr',
-    'asr',
-    'maghrib',
-    'isha',
-  ];
+  static const prayers = <String>['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
   static const _settingsBox = 'deen_settings';
   static const _logBox = 'salah_log';
@@ -88,6 +84,67 @@ class DeenStore {
     _arabic.put('known', list);
   }
 
+  // ─── কঠিন শব্দ (hard) — সমস্যা চিহ্নিত + সেগুলোতে বেশি মুখস্থ ──
+  static List<String> _hardList() {
+    final v = _arabic.get('hard');
+    if (v is List) return List<String>.from(v.map((e) => e.toString()));
+    return const [];
+  }
+
+  static Set<String> arabicHard() => _hardList().toSet();
+
+  static bool isHard(String k) => _hardList().contains(k);
+
+  static void hardMark(String k) {
+    final list = _hardList();
+    if (!list.contains(k)) {
+      list.add(k);
+      _arabic.put('hard', list);
+    }
+  }
+
+  static void hardUnmark(String k) {
+    final list = _hardList()..remove(k);
+    _arabic.put('hard', list);
+  }
+
+  /// জানি ✓ মানে একসাথে: বেস পরিচিতি + কঠিন-তালিকা থেকে বাদ।
+  static void resolveHardAndKnown(String hardKey, String knownKey) {
+    hardUnmark(hardKey);
+    arabicMark(knownKey);
+  }
+
+  // ─── কুরআন আয়াতের দুই ধরনের প্রগ্রেস: পড়া শেষ (read:) + মুখস্থ (mem:) ──
+  static List<String> _memList() {
+    final v = _arabic.get('mem');
+    if (v is List) return List<String>.from(v.map((e) => e.toString()));
+    return const [];
+  }
+
+  static Set<String> quranMems() => _memList().toSet();
+
+  static bool isQuranMem(String k) => _memList().contains(k);
+
+  static void quranMemMark(String k) {
+    final list = _memList();
+    if (!list.contains(k)) {
+      list.add(k);
+      _arabic.put('mem', list);
+    }
+  }
+
+  static void quranMemUnmark(String k) {
+    final list = _memList()..remove(k);
+    _arabic.put('mem', list);
+  }
+
+  /// "পড়া শেষ ✓" — `read:<index>:<n>` কিগুলো (অন্য known আইটেম নয়)।
+  static Set<String> quranReads() =>
+      arabicKnown().where((k) => k.startsWith('read:')).toSet();
+
+  static bool isQuranRead(String k) =>
+      _knownList().contains(k) && k.startsWith('read:');
+
   // ─── Settings ─────────────────────────────────────────────────────────
   static String dayKey(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -98,12 +155,14 @@ class DeenStore {
   static String get asrKey =>
       _settings.get('asr', defaultValue: AsrJuristic.shafi.key) as String;
 
-  static String get highLatKey => _settings
-      .get('highLat', defaultValue: HighLatRule.middle.key) as String;
+  static String get highLatKey =>
+      _settings.get('highLat', defaultValue: HighLatRule.middle.key) as String;
 
-  static double get lat => (_settings.get('lat', defaultValue: 23.8103) as num).toDouble();
+  static double get lat =>
+      (_settings.get('lat', defaultValue: 23.8103) as num).toDouble();
 
-  static double get lng => (_settings.get('lng', defaultValue: 90.4125) as num).toDouble();
+  static double get lng =>
+      (_settings.get('lng', defaultValue: 90.4125) as num).toDouble();
 
   /// UTC থেকে মিনিট (ঢাকা: 360)
   static double get tzMinutes =>
@@ -114,9 +173,7 @@ class DeenStore {
     final map = <PrayerKind, double>{};
     if (raw is Map) {
       for (final e in raw.entries) {
-        final k = PrayerKind.values
-            .where((p) => p.name == e.key)
-            .firstOrNull;
+        final k = PrayerKind.values.where((p) => p.name == e.key).firstOrNull;
         if (k != null) map[k] = (e.value as num).toDouble();
       }
     }
@@ -137,10 +194,7 @@ class DeenStore {
     required bool enabled,
     required Map<String, bool> toggles,
   }) {
-    _settings.putAll({
-      'notifEnabled': enabled,
-      'notifToggles': toggles,
-    });
+    _settings.putAll({'notifEnabled': enabled, 'notifToggles': toggles});
   }
 
   static void saveSettings({
@@ -160,9 +214,7 @@ class DeenStore {
       'lng': lng,
       'tzMinutes': tzMinutes,
       if (offsets != null)
-        'offsets': {
-          for (final e in offsets.entries) e.key.name: e.value,
-        },
+        'offsets': {for (final e in offsets.entries) e.key.name: e.value},
     });
   }
 
@@ -179,7 +231,9 @@ class DeenStore {
   }
 
   static void setSalah(String key, String prayer, SalahMode mode) {
-    final day = Map<String, dynamic>.from(_log.get(key, defaultValue: {}) as Map);
+    final day = Map<String, dynamic>.from(
+      _log.get(key, defaultValue: {}) as Map,
+    );
     day[prayer] = SalahEntry(mode: mode, ts: DateTime.now()).toMap();
     _log.put(key, day);
   }
@@ -200,9 +254,8 @@ class DeenStore {
 
   /// [end] পর্যন্ত (যেমন আজ) ৭ দিনের log — ইতিহাস grid-এর জন্য।
   static List<({String key, DateTime date, Map<String, SalahEntry> log})>
-      lastNDays(int n, DateTime end) {
-    final list = <
-        ({String key, DateTime date, Map<String, SalahEntry> log})>[];
+  lastNDays(int n, DateTime end) {
+    final list = <({String key, DateTime date, Map<String, SalahEntry> log})>[];
     final base = DateTime(end.year, end.month, end.day);
     for (var i = n - 1; i >= 0; i--) {
       final d = base.subtract(Duration(days: i));
@@ -236,7 +289,9 @@ class DeenStore {
     required List<int> counts,
     required bool done,
   }) {
-    final day = Map<String, dynamic>.from(_amal.get(key, defaultValue: {}) as Map);
+    final day = Map<String, dynamic>.from(
+      _amal.get(key, defaultValue: {}) as Map,
+    );
     final pp = Map<String, dynamic>.from(day['post_prayer'] as Map? ?? {});
     pp[prayer] = {
       'step': step,
@@ -316,15 +371,12 @@ class DeenStore {
     required int target,
   }) {
     final runs = [...tasbihRuns()];
-    runs.insert(
-      0,
-      {
-        'name': name,
-        'count': count,
-        'target': target,
-        'ts': DateTime.now().toIso8601String(),
-      },
-    );
+    runs.insert(0, {
+      'name': name,
+      'count': count,
+      'target': target,
+      'ts': DateTime.now().toIso8601String(),
+    });
     _tasbih.put('runs', runs.take(30).toList());
   }
 
@@ -333,8 +385,8 @@ class DeenStore {
   // ─── Bookmarks (deen_meta) ────────────────────────────────────────────
   /// saved list — item key: `dua:...` / `hadith:...`।
   static List<String> deenBookmarks() => List<String>.from(
-        _meta.get('bookmarks', defaultValue: <String>[]) as List,
-      );
+    _meta.get('bookmarks', defaultValue: <String>[]) as List,
+  );
 
   static bool isBookmarked(String key) => deenBookmarks().contains(key);
 
@@ -364,7 +416,9 @@ class DeenStore {
   static bool isAdhkarDone(String id) => adhkarDoneToday().contains(id);
 
   static void toggleAdhkar(String id) {
-    final day = Map<String, dynamic>.from(_amal.get(dayKey(DateTime.now()), defaultValue: {}) as Map);
+    final day = Map<String, dynamic>.from(
+      _amal.get(dayKey(DateTime.now()), defaultValue: {}) as Map,
+    );
     final list = adhkarDoneToday();
     if (list.contains(id)) {
       list.remove(id);
@@ -382,15 +436,16 @@ class DeenStore {
   }
 
   static void addQuranMinutes(int delta) {
-    final day = Map<String, dynamic>.from(_amal.get(dayKey(DateTime.now()), defaultValue: {}) as Map);
+    final day = Map<String, dynamic>.from(
+      _amal.get(dayKey(DateTime.now()), defaultValue: {}) as Map,
+    );
     final cur = (day['quran_min'] as num?)?.toInt() ?? 0;
     day['quran_min'] = (cur + delta).clamp(0, 1440);
     _amal.put(dayKey(DateTime.now()), day);
   }
 
   // ─── অ্যাড-ক্যার ডেইলি লার্ন মেটা (deen_meta) ─────────────────────────
-  static String? get dailyLearnDate =>
-      _meta.get('daily_learn_date') as String?;
+  static String? get dailyLearnDate => _meta.get('daily_learn_date') as String?;
 
   static void setDailyLearnDone() =>
       _meta.put('daily_learn_date', dayKey(DateTime.now()));
@@ -463,9 +518,9 @@ class DeenStore {
 
   /// এখন পর্যালোচনার (recall) সময় হয়েছে এমন আইটেম।
   static List<String> dueMemorizationIds(DateTime now) => [
-        for (final e in memorizationAll().entries)
-          if (!e.value.nextReview.isAfter(now)) e.key,
-      ];
+    for (final e in memorizationAll().entries)
+      if (!e.value.nextReview.isAfter(now)) e.key,
+  ];
 
   /// আজ নতুন করে শেখা/পর্যালোচনা করা আইটেমের তালিকা।
   static List<String> memorizedTodayIds() {
@@ -496,16 +551,18 @@ class MemorizationEntry {
   bool get isDueNow => !nextReview.isAfter(DateTime.now());
 
   Map<String, dynamic> toMap() => {
-        'level': level,
-        'nextReview': nextReview.toIso8601String(),
-        'streak': streak,
-        'wrong': wrong,
-        'lastReview': lastReview.toIso8601String(),
-      };
+    'level': level,
+    'nextReview': nextReview.toIso8601String(),
+    'streak': streak,
+    'wrong': wrong,
+    'lastReview': lastReview.toIso8601String(),
+  };
 
-  factory MemorizationEntry.fromMap(Map<dynamic, dynamic> m) => MemorizationEntry(
+  factory MemorizationEntry.fromMap(Map<dynamic, dynamic> m) =>
+      MemorizationEntry(
         level: ((m['level'] as num?) ?? 1).toInt().clamp(1, 5),
-        nextReview: DateTime.tryParse(m['nextReview'] as String? ?? '') ??
+        nextReview:
+            DateTime.tryParse(m['nextReview'] as String? ?? '') ??
             DateTime.fromMillisecondsSinceEpoch(0),
         streak: ((m['streak'] as num?) ?? 0).toInt(),
         wrong: ((m['wrong'] as num?) ?? 0).toInt(),

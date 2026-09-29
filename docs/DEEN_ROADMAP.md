@@ -63,6 +63,7 @@ GitHub JSON → Downloader → Validator → Local DB → Repository → Offline
 | **M10** | **Grammar** | Noun/Verb/Particle → Gender → Number → Case → Sentence role, বাংলায় | ✅ |
 | **M11** | **AI Teacher** | offline প্রশ্ন-উত্তর (সেভ করা content), Gemini চালু থাকলে আরও (M11.1 ✅; M11.2 ✅ — ব্যক্তিগত প্রগ্রেস রেকর্ড: কোন ধাপে কতটুকু "জানি ✓", পরের ধাপের পরামর্শ, আজকের প্রশ্ন-সংখ্যা, রেকর্ড — স্কোর নয়) | ✅ |
 | M12 | Speaking/Listening | বাক্য বলো → **(v1 ✅)** "🗣️ বলে পড়ো" self-check: শব্দ/শব্দভাণ্ডার/ফাতিহা আয়াত — আরবি দেখে নিজে পড়ে বলো, পড়া/অর্থ পরে খুলো, `said:*` লোকাল রেকর্ড (রেকর্ড, বিচার নয়)। **Listening (audio content/TTS) ও pronunciation-judge এখনো নেই** — dedicated speech tech ছাড়া সম্ভব নয় | 🚧 |
+| **M13** | **কুরআন পড়ার মূল ফেজ** ("শুধু কুরআন পড়াই শিখি") | **(✅ কনটেন্ট)** সব ১১৪ সূরার আয়াত-ধরে-আয়াত (রাসম-ই-উসমানি লিপি, alquran.cloud quran-academy, যাচাই: ৬২৩৬ আয়াত) + প্রতি আয়াতের বাংলা অনুবাদ (Muhiuddin Khan) + **প্রতি আয়াতের বাংলা-বানানে পড়া `tl`** (স্বয়ংক্রিয় মেকানিক্যাল ট্রান্সলিটারেশন, ৬২৩৬ আয়াত) → `quran/NNN_id.json` `ayahs:[{n,ar,bn,tl}]`; `arabic/letters_quran.json` (প্রতি অক্ষরের কুরআন থেকে বাস্তব শব্দ-উদাহরণ, ২৮×৪=১৬৮)। **(✅ App)** reader: আয়াত-কার্ডে **৩ লাইন সবসময় দেখা** (স্পষ্ট আরবি ২১px → "🔤 বাংলা-বানানে পড়া" → "💬 অর্থ"), টিক ২টি — **"মুখস্থ ✓"** (`mem:<i>:<n>`, ★) + **"পড়া শেষ ✓"** (`read:<i>:<n>`, ✓) — সাথে "কঠিন ⚠️" (hard); পড়া-টগল সরানো; সূরার ভেতরে প্রগ্রেস-কার্ড (পড়া X/Y · মুখস্থ A/B) + সূরা-তালিকার শীর্ষে **সার্বিক % (পড়া ও মুখস্থ, /৬২৩৬)**; সূরা-লেভেল `transliteration` ডেটা-বাগ ফিক্স (০৭৯–১১৪-এ পরের সূরার টেক্সট ছিল → মুছে ফেলা); `${_bn(...)}` closure-bug ফিক্স | ✅ |
 
 ---
 
@@ -91,6 +92,15 @@ GitHub JSON → Downloader → Validator → Local DB → Repository → Offline
 - `lib/services/arabic_teacher.dart` + `arabic_teacher_screen` — offline প্রশ্ন-উত্তর: হরকত / অক্ষর / শব্দভাণ্ডার / মূলধাতু / পথনির্দেশনা / ফাতিহা / ব্যাকরণ intent। Online `Gemini` চালু থাকলে (`AiSettings.onlineEnabled` + `LIFEOS_GEMINI_KEY`) ফ্রি-প্রশ্নেও উত্তর; না থাকলে নিজেই offline-এ নামে। M11.2: `lib/services/deen_progress.dart` — ব্যক্তিগত প্রগ্রেস রেকর্ড (কোন ধাপে কতটুকু "জানি ✓", পরের ধাপ, আজকের প্রশ্ন-সংখ্যা; রেকর্ড — স্কোর নয়) + শিক্ষক স্ক্রিনে লাইভ প্রগ্রেস স্ট্রিপ।
 - `lib/screens/deen/speak_drill_screen.dart` + হাব কার্ড — M12 v1 "🗣️ বলে পড়ো" (self-check read-aloud): শব্দ / শব্দভাণ্ডার / ফাতিহা আয়াত; আরবি দেখে নিজে পড়ে বলা, পড়া/অর্থ পরেই খোলা, `said:<kind>:<id>` লোকাল রেকর্ড।
 - রিপো `manifest.json` + `content_store_screen` — কোন কোন সম্পদ আছে (version, count, source) + "আবার নামাও" (force re-download)। Loader: `ContentRepository` (`content_repository.dart`) — GitHub → strict-JSON validate → Hive ক্যাশ → offline।
+
+---
+
+## ৪.২ M13 — কুরআন পড়ার মূল ফেজ (আয়াত-ধরে-আয়াত)
+
+- **কনটেন্ট (`islamic_data`)**: সব ১১৪ সূরার ফাইল আপডেট/নতুন — `ayahs:[{n, ar, bn}]` = রাসম-ই-উসমানি (কুরআনের আসল লিপি, alquran.cloud `quran-academy` edition) + বাংলা অনুবাদ (Muhiuddin Khan)। ৭৬টি সূরা আগে metadata-only ছিল → এখন পূর্ণ পাঠ। মোট ৬২৩৬ আয়াত (উৎস-সহ যাচাই)। `manifest.json` — ১২৭টা ফাইল, sunra kind-এর double-encoded mojibake ফিক্স (`সূরা <নাম>`), নতুন ফাইল যোগ। `arabic/letters_quran.json` — ২৮ অক্ষরের কুরআন-উদাহরণ (isolated/initial/medial/final)।
+- **App**: `SurahItem.ayahs` (new `SurahAyah` + `tl`) → reader-এ লাইন-লাইন আয়াত কার্ড: **৩ লাইন সবসময়** — স্পষ্ট আরবি (২১px, রাসম-ই-উসমানি) → "🔤 বাংলা-বানানে পড়া" (স্বয়ংক্রিয় মেকানিক্যাল ট্রান্সলিটারেশন, সুন্ন-ল্যাম/শদ্দা/তানউইন/মাদ-সিপ ম্যানেজ করা) → "💬 অর্থ" (অর্থ-টগল সরানো — সবসময় দেখানো)। টিক ২টি: "মুখস্থ ✓" (`mem:<i>:<n>`) দিয়ে নিজের মুখস্থ মার্ক + "পড়া শেষ ✓" (`read:<i>:<n>`)। সূরার প্রগ্রেস-কার্ড + সূরা-তালিকার শীর্ষে সার্বিক "পড়া শেষ X% · মুখস্থ Y%"। "কঠিন ⚠️" (`hard:*`) আগের মতো। `DeenStore`-এ `mem` লিস্ট (`quranMemMark/Unmark`, `quranMems`) + `quranReads()` (শুধু `read:*` কিগুলো)। **Data bug-fix**: `001_fatiha` বাদে সব সূরার লেভেল `transliteration` এখন খালি (০৭৯–১১৪-এ পরের সূরার টেক্সট বসানো ছিল — পুরনো জেনারেটর বাগ); এখন পড়া প্রতিটি আয়াতে `tl`-এ।
+- **ব্যবহার**: অ্যাপ আপডেটের পর Content Store → "আবার নামাও" (নতুন ১২৭-ফাইল বান্ডল) → সব ১১৪ সূরা লাইন-লাইন পড়া যায়, offline-এ।
+- **আগামী (M12 listening/pronunciation)**: শুধু স্পিচ-টেক (TTS/audio) বাকি — তাই এখানে নয়।
 
 ---
 

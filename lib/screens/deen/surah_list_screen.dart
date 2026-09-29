@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lifeos/screens/deen/surah_reader_screen.dart';
 import 'package:lifeos/services/deen_seed.dart';
+import 'package:lifeos/services/deen_store.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
 import 'package:lifeos/widgets/glass_card.dart';
@@ -86,7 +88,7 @@ class _SurahListScreenState extends State<SurahListScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${_bnNum(surahs.length)}টি সূরা · যার পাঠ (আরবি + অর্থ) আছে তা থেকে পড়ুন — বাকিগুলো ধাপে ধাপে যোগ হচ্ছে',
+                        '${_bnNum(surahs.length)}টি সূরা · সব কটির আয়াত ধরে ধরে পাঠ — কুরআনের লিপিতে, বাংলা অনুবাদসহ',
                         style: TextStyle(
                           fontSize: 12,
                           height: 1.5,
@@ -148,6 +150,13 @@ class _SurahListScreenState extends State<SurahListScreen> {
                         ),
                       ),
                       const SizedBox(height: 6),
+                      ListenableBuilder(
+                        listenable: Hive.box('deen_arabic').listenable(),
+                        builder: (context, _) {
+                          return _progressCard(c, surahs);
+                        },
+                      ),
+                      const SizedBox(height: 6),
                       if (_filtered.isEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 24),
@@ -171,8 +180,75 @@ class _SurahListScreenState extends State<SurahListScreen> {
     );
   }
 
+  Widget _progressCard(AppColors c, List<SurahItem> surahs) {
+    final total = surahs.fold<int>(0, (t, s) => t + s.ayahs.length);
+    final reads = DeenStore.quranReads().length;
+    final mems = DeenStore.quranMems().length;
+    final readPct = total == 0 ? 0 : (reads * 100 / total).round();
+    final memPct = total == 0 ? 0 : (mems * 100 / total).round();
+    Widget bar(int done) => ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: LinearProgressIndicator(
+        value: total == 0 ? 0 : done / total,
+        minHeight: 6,
+        backgroundColor: c.textSecondary.withValues(alpha: 0.15),
+        valueColor: AlwaysStoppedAnimation(
+          done > 0 ? c.glow : c.textSecondary.withValues(alpha: 0.4),
+        ),
+      ),
+    );
+    return GlassCard(
+      padding: const EdgeInsets.all(12),
+      borderRadius: BorderRadius.circular(15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '📖 কুরআন পড়ার প্রগ্রেস',
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
+              color: c.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: bar(reads)),
+              const SizedBox(width: 10),
+              Text(
+                'পড়া শেষ ${_bnNum(readPct)}% (${_bnNum(reads)}/${_bnNum(total)})',
+                style: TextStyle(fontSize: 11, color: c.glow),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: bar(mems)),
+              const SizedBox(width: 10),
+              Text(
+                'মুখস্থ ${_bnNum(memPct)}% (${_bnNum(mems)}/${_bnNum(total)})',
+                style: TextStyle(fontSize: 11, color: c.lowPriority),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'প্রতিটি আয়াত-কার্ডে "মুখস্থ" আর "পড়া শেষ" চিহ্নিত করলে এই % আপডেট হবে।',
+            style: TextStyle(
+              fontSize: 10,
+              height: 1.5,
+              color: c.textSecondary.withValues(alpha: 0.85),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _tile(AppColors c, SurahItem s) {
-    final hasText = s.arabic.trim().isNotEmpty;
+    final hasText = s.arabic.trim().isNotEmpty || s.ayahs.isNotEmpty;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: GlassCard(
