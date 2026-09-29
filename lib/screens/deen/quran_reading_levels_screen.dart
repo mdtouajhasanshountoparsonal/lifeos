@@ -578,23 +578,32 @@ class _WordRevealCardState extends State<_WordRevealCard> {
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: () {
-                          DeenStore.resolveHardAndKnown(
-                            widget.memKey,
-                            widget.memKey,
-                          );
-                          setState(() {});
+                          if (widget.isMem) {
+                            DeenStore.quranMemUnmark(widget.memKey);
+                          } else {
+                            DeenStore.quranMemMark(widget.memKey);
+                          }
                         },
-                        icon: const Icon(Icons.bookmark_rounded, size: 17),
-                        label: const Text(
-                          'মুখস্থ ✓',
-                          style: TextStyle(
+                        icon: Icon(
+                          widget.isMem
+                              ? Icons.bookmark_rounded
+                              : Icons.bookmark_add_outlined,
+                          size: 17,
+                        ),
+                        label: Text(
+                          widget.isMem ? 'মুখস্থ ✓ রেখেছি' : 'মুখস্থ ✓',
+                          style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 12.5,
                           ),
                         ),
                         style: FilledButton.styleFrom(
-                          backgroundColor: c.glow,
-                          foregroundColor: Colors.black,
+                          backgroundColor: widget.isMem
+                              ? c.glow
+                              : c.surfaceColor,
+                          foregroundColor: widget.isMem
+                              ? Colors.black
+                              : c.textSecondary,
                         ),
                       ),
                     ),
@@ -602,20 +611,32 @@ class _WordRevealCardState extends State<_WordRevealCard> {
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: () {
-                          DeenStore.arabicMark(widget.readKey);
-                          setState(() {});
+                          if (widget.isRead) {
+                            DeenStore.arabicUnmark(widget.readKey);
+                          } else {
+                            DeenStore.arabicMark(widget.readKey);
+                          }
                         },
-                        icon: const Icon(Icons.check_rounded, size: 17),
-                        label: const Text(
-                          'পড়া শেষ ✓',
-                          style: TextStyle(
+                        icon: Icon(
+                          widget.isRead
+                              ? Icons.check_circle_rounded
+                              : Icons.check_circle_outline_rounded,
+                          size: 17,
+                        ),
+                        label: Text(
+                          widget.isRead ? 'পড়া শেষ ✓ রেখেছি' : 'পড়া শেষ ✓',
+                          style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 12.5,
                           ),
                         ),
                         style: FilledButton.styleFrom(
-                          backgroundColor: c.lowPriority,
-                          foregroundColor: Colors.black,
+                          backgroundColor: widget.isRead
+                              ? c.lowPriority
+                              : c.surfaceColor,
+                          foregroundColor: widget.isRead
+                              ? Colors.black
+                              : c.textSecondary,
                         ),
                       ),
                     ),

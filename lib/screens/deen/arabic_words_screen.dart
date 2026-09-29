@@ -83,7 +83,11 @@ class _ArabicWordsScreenState extends State<ArabicWordsScreen> {
                                 listenable: Hive.box('deen_arabic')
                                     .listenable(),
                                 builder: (context, _) {
-                                  final count = DeenStore.arabicKnown().length;
+                                  final count = words
+                                      .where(
+                                        (w) => DeenStore.isArabicKnown(w.id),
+                                      )
+                                      .length;
                                   return Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 10,
