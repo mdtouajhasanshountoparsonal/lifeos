@@ -6,8 +6,10 @@ import 'package:lifeos/screens/deen/arabic_words_screen.dart';
 import 'package:lifeos/screens/deen/arabic_teacher_screen.dart';
 import 'package:lifeos/screens/deen/content_store_screen.dart';
 import 'package:lifeos/screens/deen/grammar_screen.dart';
+import 'package:lifeos/screens/deen/harakat_drill_screen.dart';
 import 'package:lifeos/screens/deen/hard_words_screen.dart';
 import 'package:lifeos/screens/deen/join_lab_screen.dart';
+import 'package:lifeos/screens/deen/quran_reading_levels_screen.dart';
 import 'package:lifeos/screens/deen/quran_words_screen.dart';
 import 'package:lifeos/screens/deen/root_words_screen.dart';
 import 'package:lifeos/screens/deen/speak_drill_screen.dart';
@@ -106,6 +108,16 @@ class _ArabicHomeScreenState extends State<ArabicHomeScreen> {
                 ),
                 _moduleCard(
                   c,
+                  emoji: '🧪',
+                  title: 'হরকত ড্রিল',
+                  subtitle: 'চিহ্ন → নাম, নাম → চিহ্ন — বারবার অনুশীলন',
+                  color: c.secondary,
+                  onTap: () =>
+                      Navigator.of(context)
+                          .push(FadeRoute(const HarakatDrillScreen())),
+                ),
+                _moduleCard(
+                  c,
                   emoji: '📖',
                   title: 'শব্দ পড়া (${_bn(_words)})',
                   subtitle: 'ছোট শব্দ পড়ে "জানি ✓" চিহ্ন দাও',
@@ -113,6 +125,16 @@ class _ArabicHomeScreenState extends State<ArabicHomeScreen> {
                   onTap: () =>
                       Navigator.of(context)
                           .push(FadeRoute(const ArabicWordsScreen())),
+                ),
+                _moduleCard(
+                  c,
+                  emoji: '🪜',
+                  title: 'কুরআন পড়ার ধাপ',
+                  subtitle: 'শব্দ → বাক্যাংশ → আয়াত — ১০টি ছোট সূরা ধাপে ধাপে',
+                  color: c.lowPriority,
+                  onTap: () =>
+                      Navigator.of(context)
+                          .push(FadeRoute(const QuranReadingLevelsScreen())),
                 ),
                 _moduleCard(
                   c,
