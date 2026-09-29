@@ -7,6 +7,53 @@ import 'package:lifeos/widgets/app_background.dart';
 import 'package:lifeos/widgets/glass_card.dart';
 import 'package:lifeos/widgets/moon_background.dart';
 
+/// বিসমিল্লাহ — কুরআনের লিপিতে (৯ নং সূরা তওবা বাদে প্রতিটি সূরার ১ নং
+/// আয়াতের শুরুতে থাকে); নিজের লাইনে আলাদা করে দেখানো হয়।
+const _basmalaAr =
+    '\u0628\u0650\u0633\u06e1\u0645\u0650\u0020\u0671\u0644\u0644\u0651\u064e\u0647\u0650\u0020\u0671\u0644\u0631\u0651\u064e\u062d\u06e1\u0645\u064e\u0640\u0670\u0646\u0650\u0020\u0671\u0644\u0631\u0651\u064e\u062d\u0650\u06cc\u0645\u0650';
+
+/// বিসমিল্লাহ-এর বাংলা-বানানে পড়া (ট্রান্সলিটারেটর নির্ধারিত রূপ)।
+const _basmalaTl = 'বিস-মি আল-লা-হি আর-রাহ-মা-নি আর-রা-হি-মি';
+
+/// আরবি (আয়াত) টেক্সটে ব্যবহৃত ফন্ট — কুরআনী লিপি + তাশকিল সঠিকভাবে দেখায়।
+const _quranFont = 'Amiri';
+
+/// আরবি তাশকিল/কুরআন-চিহ্ন (নরমালাইজ করে বাদ দেওয়া হয়)।
+final _arMarks = RegExp(
+  r'[\u0610-\u061a\u0640\u064b-\u0652\u0656-\u065f\u0670\u06d6-\u06ed\u08d3-\u08ff]',
+);
+
+/// আলিফের রূপ (ا أ إ آ ٱ) — সবকে এক বলে ধরি।
+final _alefForms = RegExp(r'[\u0622\u0623\u0625\u0671]');
+
+/// `ar`-এর শুরু থেকে পুরো বিসমিল্লাহ (যেকোনো লিপি-ভ্যারিয়েন্টসহ) কত অক্ষর
+/// দখল করে তা-বেরে — ম্যাচ না পেলে 0। তাওবাহ (৯)-তে নেই → 0।
+int _basmalaLen(String ar) {
+  final target = _basmalaAr
+      .replaceAll(_arMarks, '')
+      .replaceAll(_alefForms, '\u0627')
+      .replaceAll(' ', '');
+  final buf = StringBuffer();
+  var len = 0;
+  for (var i = 0; i < ar.length; i++) {
+    buf.write(ar[i]);
+    final n = buf
+        .toString()
+        .replaceAll(_arMarks, '')
+        .replaceAll(_alefForms, '\u0627')
+        .replaceAll(' ', '');
+    if (n == target) {
+      len = i + 1;
+      break;
+    }
+  }
+  if (len == 0) return 0;
+  while (len < ar.length && _arMarks.hasMatch(ar[len])) {
+    len++;
+  }
+  return len;
+}
+
 /// 🔖 একটি সূরার পূর্ণ পাঠ — আয়াত ধরে ধরে (কুরআনের লিপি: رسم عثمانی) +
 /// বাংলা-বানানে পড়া + বাংলা অনুবাদ + 'মুখস্থ ✓' / 'পড়া শেষ ✓' / 'কঠিন ⚠️'।
 class SurahReaderScreen extends StatefulWidget {
@@ -114,10 +161,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
                           children: [
                             Text(
                               '${s.arabicName} · ${s.name}',
-                              style: TextStyle(
+                              style: const TextStyle(
+                                fontFamily: _quranFont,
                                 fontSize: 19,
                                 fontWeight: FontWeight.w800,
-                                color: c.textPrimary,
+                                color: Colors.white,
                               ),
                             ),
                             Text(
@@ -250,6 +298,16 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
             final read = reads.contains(aKey);
             final mem = mems.contains(mKey);
             final hard = DeenStore.isHard(hKey);
+            final bmLen = a.n == 1 ? _basmalaLen(a.ar) : 0;
+            final hasBm = bmLen > 0;
+            final ayahAr = hasBm
+                ? (a.ar.length > bmLen ? a.ar.substring(bmLen).trim() : '')
+                : a.ar;
+            final ayahTl = hasBm
+                ? (a.tl.startsWith(_basmalaTl)
+                      ? a.tl.substring(_basmalaTl.length).trim()
+                      : a.tl.trim())
+                : a.tl.trim();
             return GlassCard(
               padding: const EdgeInsets.all(13),
               borderRadius: BorderRadius.circular(15),
@@ -312,20 +370,55 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
                         ),
                       ],
                     ),
-                    Text(
-                      a.ar,
-                      textDirection: TextDirection.rtl,
-                      style: TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.w700,
-                        height: 1.9,
-                        color: c.textPrimary,
+                    if (hasBm) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        _basmalaAr,
+                        textDirection: TextDirection.rtl,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: _quranFont,
+                          fontSize: 23,
+                          height: 2.0,
+                          color: c.textPrimary,
+                        ),
                       ),
-                    ),
-                    if (a.tl.trim().isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        _basmalaTl,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.6,
+                          fontWeight: FontWeight.w600,
+                          color: c.glow,
+                        ),
+                      ),
+                    ],
+                    if (hasBm && ayahAr.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Divider(
+                        height: 1,
+                        color: c.textSecondary.withValues(alpha: 0.18),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    if (ayahAr.isNotEmpty)
+                      Text(
+                        ayahAr,
+                        textDirection: TextDirection.rtl,
+                        style: TextStyle(
+                          fontFamily: _quranFont,
+                          fontSize: 21,
+                          fontWeight: FontWeight.w700,
+                          height: 1.9,
+                          color: c.textPrimary,
+                        ),
+                      ),
+                    if (ayahTl.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Text(
-                        '🔤 ${a.tl}',
+                        '🔤 $ayahTl',
                         style: TextStyle(
                           fontSize: 13.5,
                           height: 1.7,

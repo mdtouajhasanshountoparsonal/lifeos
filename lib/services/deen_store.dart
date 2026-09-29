@@ -64,7 +64,7 @@ class DeenStore {
   static List<String> _knownList() {
     final v = _arabic.get('known');
     if (v is List) return List<String>.from(v.map((e) => e.toString()));
-    return const [];
+    return <String>[];
   }
 
   static Set<String> arabicKnown() => _knownList().toSet();
@@ -88,7 +88,7 @@ class DeenStore {
   static List<String> _hardList() {
     final v = _arabic.get('hard');
     if (v is List) return List<String>.from(v.map((e) => e.toString()));
-    return const [];
+    return <String>[];
   }
 
   static Set<String> arabicHard() => _hardList().toSet();
@@ -118,7 +118,7 @@ class DeenStore {
   static List<String> _memList() {
     final v = _arabic.get('mem');
     if (v is List) return List<String>.from(v.map((e) => e.toString()));
-    return const [];
+    return <String>[];
   }
 
   static Set<String> quranMems() => _memList().toSet();
