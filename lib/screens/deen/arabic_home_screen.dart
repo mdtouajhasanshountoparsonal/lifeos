@@ -7,6 +7,7 @@ import 'package:lifeos/screens/deen/arabic_teacher_screen.dart';
 import 'package:lifeos/screens/deen/content_store_screen.dart';
 import 'package:lifeos/screens/deen/grammar_screen.dart';
 import 'package:lifeos/screens/deen/hard_words_screen.dart';
+import 'package:lifeos/screens/deen/join_lab_screen.dart';
 import 'package:lifeos/screens/deen/quran_words_screen.dart';
 import 'package:lifeos/screens/deen/root_words_screen.dart';
 import 'package:lifeos/screens/deen/speak_drill_screen.dart';
@@ -81,6 +82,17 @@ class _ArabicHomeScreenState extends State<ArabicHomeScreen> {
                   onTap: () =>
                       Navigator.of(context)
                           .push(FadeRoute(const AlphabetScreen())),
+                ),
+                _moduleCard(
+                  c,
+                  emoji: '🔗',
+                  title: 'Joining Lab',
+                  subtitle:
+                      'অক্ষর জোড়া ও শব্দ-জোড়া — যুক্ত রূপ দেখে "জানি ✓" দাও',
+                  color: c.secondary,
+                  onTap: () =>
+                      Navigator.of(context)
+                          .push(FadeRoute(const JoinLabScreen())),
                 ),
                 _moduleCard(
                   c,

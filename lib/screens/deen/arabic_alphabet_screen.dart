@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lifeos/services/arabic_seed.dart';
+import 'package:lifeos/services/arabic_tts.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
 import 'package:lifeos/widgets/glass_card.dart';
@@ -35,6 +36,7 @@ class _AlphabetScreenState extends State<AlphabetScreen> {
   }
 
   void _showDetail(AppColors c, ArabicLetterItem l) {
+    speakPron(l.reading);
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -106,6 +108,7 @@ class _AlphabetScreenState extends State<AlphabetScreen> {
                                   Text(
                                     l.letter,
                                     style: TextStyle(
+                                      fontFamily: kArabicFont,
                                       fontSize: 30,
                                       fontWeight: FontWeight.w700,
                                       color: c.glow,
@@ -171,6 +174,7 @@ class _AlphabetScreenState extends State<AlphabetScreen> {
                   child: Text(
                     l.letter,
                     style: TextStyle(
+                      fontFamily: kArabicFont,
                       fontSize: 48,
                       fontWeight: FontWeight.w700,
                       color: c.glow,
@@ -254,6 +258,7 @@ class _AlphabetScreenState extends State<AlphabetScreen> {
                           l.example,
                           textAlign: TextAlign.right,
                           style: TextStyle(
+                            fontFamily: kArabicFont,
                             fontSize: 26,
                             fontWeight: FontWeight.w700,
                             color: c.textPrimary,
@@ -317,6 +322,7 @@ class _AlphabetScreenState extends State<AlphabetScreen> {
           child: Text(
             form,
             style: TextStyle(
+              fontFamily: kArabicFont,
               fontSize: 26,
               fontWeight: FontWeight.w600,
               color: c.textPrimary,
@@ -390,6 +396,7 @@ class _AlphabetScreenState extends State<AlphabetScreen> {
                           m[key]!,
                           textAlign: TextAlign.right,
                           style: TextStyle(
+                            fontFamily: kArabicFont,
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
                             color: c.textPrimary,
