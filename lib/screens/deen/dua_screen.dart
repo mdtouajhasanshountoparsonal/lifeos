@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:lifeos/services/arabic_quran_text.dart';
 import 'package:lifeos/services/deen_seed.dart';
 import 'package:lifeos/services/deen_store.dart';
 import 'package:lifeos/theme/app_theme.dart';
@@ -65,7 +66,10 @@ class _DuaScreenState extends State<DuaScreen> {
                     children: [
                       IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(Icons.arrow_back_rounded, color: c.textSecondary),
+                        icon: Icon(
+                          Icons.arrow_back_rounded,
+                          color: c.textSecondary,
+                        ),
                       ),
                       const SizedBox(width: 2),
                       Expanded(
@@ -74,11 +78,18 @@ class _DuaScreenState extends State<DuaScreen> {
                           children: [
                             Text(
                               '🤲 দুআ',
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: c.textPrimary),
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: c.textPrimary,
+                              ),
                             ),
                             Text(
                               'সংগ্রহশালা — সোর্সসহ, AI নয়',
-                              style: TextStyle(fontSize: 11.5, color: c.textSecondary),
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: c.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -88,9 +99,12 @@ class _DuaScreenState extends State<DuaScreen> {
                         builder: (context, _) {
                           return IconButton(
                             tooltip: 'সংরক্ষিত শুধু দেখুন',
-                            onPressed: () => setState(() => _onlySaved = !_onlySaved),
+                            onPressed: () =>
+                                setState(() => _onlySaved = !_onlySaved),
                             icon: Icon(
-                              _onlySaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                              _onlySaved
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_border_rounded,
                               color: _onlySaved ? c.glow : c.textSecondary,
                             ),
                           );
@@ -106,12 +120,25 @@ class _DuaScreenState extends State<DuaScreen> {
                     style: TextStyle(fontSize: 14, color: c.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'বাংলা বা আরবিতে খুঁজুন…',
-                      hintStyle: TextStyle(fontSize: 13, color: c.textSecondary.withValues(alpha: 0.7)),
-                      prefixIcon: Icon(Icons.search_rounded, size: 18, color: c.textSecondary),
+                      hintStyle: TextStyle(
+                        fontSize: 13,
+                        color: c.textSecondary.withValues(alpha: 0.7),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        size: 18,
+                        color: c.textSecondary,
+                      ),
                       filled: true,
                       fillColor: c.cardColor,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                 ),
@@ -124,7 +151,12 @@ class _DuaScreenState extends State<DuaScreen> {
                       for (final s in ['সব', ..._sections])
                         Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: _chip(c, s, _section == s, () => setState(() => _section = s)),
+                          child: _chip(
+                            c,
+                            s,
+                            _section == s,
+                            () => setState(() => _section = s),
+                          ),
                         ),
                     ],
                   ),
@@ -133,7 +165,12 @@ class _DuaScreenState extends State<DuaScreen> {
                 Expanded(
                   child: _loaded
                       ? _list(c)
-                      : Center(child: CircularProgressIndicator(color: c.glow, strokeWidth: 2.5)),
+                      : Center(
+                          child: CircularProgressIndicator(
+                            color: c.glow,
+                            strokeWidth: 2.5,
+                          ),
+                        ),
                 ),
               ],
             ),
@@ -169,7 +206,10 @@ class _DuaScreenState extends State<DuaScreen> {
     final items = _filtered;
     if (items.isEmpty) {
       return Center(
-        child: Text('কিছু পাওয়া যায়নি — অন্য সেকশন বা শব্দে খুঁজুন', style: TextStyle(fontSize: 13, color: c.textSecondary)),
+        child: Text(
+          'কিছু পাওয়া যায়নি — অন্য সেকশন বা শব্দে খুঁজুন',
+          style: TextStyle(fontSize: 13, color: c.textSecondary),
+        ),
       );
     }
     return ListView.builder(
@@ -198,12 +238,19 @@ class _DuaScreenState extends State<DuaScreen> {
                         children: [
                           Text(
                             d.bangla,
-                            style: TextStyle(fontSize: 13.5, height: 1.5, color: c.textPrimary),
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              height: 1.5,
+                              color: c.textPrimary,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '${d.section} · ${d.hasSource ? d.source : 'source নেই'}',
-                            style: TextStyle(fontSize: 11, color: c.textSecondary),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: c.textSecondary,
+                            ),
                           ),
                         ],
                       ),
@@ -214,11 +261,16 @@ class _DuaScreenState extends State<DuaScreen> {
                         final saved = DeenStore.isBookmarked('dua:${d.id}');
                         return IconButton(
                           visualDensity: VisualDensity.compact,
-                          onPressed: () => DeenStore.toggleBookmark('dua:${d.id}'),
+                          onPressed: () =>
+                              DeenStore.toggleBookmark('dua:${d.id}'),
                           icon: Icon(
-                            saved ? Icons.bookmark_rounded : Icons.bookmark_add_outlined,
+                            saved
+                                ? Icons.bookmark_rounded
+                                : Icons.bookmark_add_outlined,
                             size: 20,
-                            color: saved ? c.glow : c.textSecondary.withValues(alpha: 0.6),
+                            color: saved
+                                ? c.glow
+                                : c.textSecondary.withValues(alpha: 0.6),
                           ),
                         );
                       },
@@ -251,7 +303,14 @@ class _DuaScreenState extends State<DuaScreen> {
         children: [
           Icon(icon, size: 16, color: color),
           const SizedBox(height: 3),
-          Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: color)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -280,7 +339,11 @@ class _DuaScreenState extends State<DuaScreen> {
                     Expanded(
                       child: Text(
                         '${d.section} · ${_typeLabel(d.type)}',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: c.textSecondary),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: c.textSecondary,
+                        ),
                       ),
                     ),
                     ListenableBuilder(
@@ -288,10 +351,15 @@ class _DuaScreenState extends State<DuaScreen> {
                       builder: (context, _) {
                         final saved = DeenStore.isBookmarked('dua:${d.id}');
                         return IconButton(
-                          tooltip: saved ? 'সংরক্ষণ মুছে ফেলুন' : 'সংরক্ষণ করুন',
-                          onPressed: () => DeenStore.toggleBookmark('dua:${d.id}'),
+                          tooltip: saved
+                              ? 'সংরক্ষণ মুছে ফেলুন'
+                              : 'সংরক্ষণ করুন',
+                          onPressed: () =>
+                              DeenStore.toggleBookmark('dua:${d.id}'),
                           icon: Icon(
-                            saved ? Icons.bookmark_rounded : Icons.bookmark_add_outlined,
+                            saved
+                                ? Icons.bookmark_rounded
+                                : Icons.bookmark_add_outlined,
                             color: saved ? c.glow : c.textSecondary,
                           ),
                         );
@@ -304,7 +372,13 @@ class _DuaScreenState extends State<DuaScreen> {
                   Text(
                     d.arabic,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: c.textPrimary, height: 1.8),
+                    style: TextStyle(
+                      fontFamily: kQuranFont,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: c.textPrimary,
+                      height: 1.8,
+                    ),
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -312,12 +386,23 @@ class _DuaScreenState extends State<DuaScreen> {
                   _label(c, 'উচ্চারণ'),
                   Text(
                     d.transliteration,
-                    style: TextStyle(fontSize: 13.5, height: 1.6, color: c.textSecondary),
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      height: 1.6,
+                      color: c.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 10),
                 ],
                 _label(c, 'অর্থ'),
-                Text(d.bangla, style: TextStyle(fontSize: 14.5, height: 1.7, color: c.textPrimary)),
+                Text(
+                  d.bangla,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    height: 1.7,
+                    color: c.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: 14),
                 _sourceChip(c, d.source, d.hasSource, 'dua:${d.id}'),
               ],
@@ -329,9 +414,16 @@ class _DuaScreenState extends State<DuaScreen> {
   }
 
   Widget _label(AppColors c, String s) => Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Text(s, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: c.textSecondary)),
-      );
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Text(
+      s,
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+        color: c.textSecondary,
+      ),
+    ),
+  );
 
   Widget _sourceChip(AppColors c, String source, bool hasSource, String key) {
     final saved = DeenStore.isBookmarked(key);
@@ -361,15 +453,22 @@ class _DuaScreenState extends State<DuaScreen> {
         ),
         const Spacer(),
         if (saved)
-          Text('🔖 সংরক্ষিত', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: c.glow)),
+          Text(
+            '🔖 সংরক্ষিত',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: c.glow,
+            ),
+          ),
       ],
     );
   }
 
   static String _typeLabel(String type) => switch (type) {
-        'hadith' => 'হাদিস থেকে',
-        'quran' => 'কুরআন থেকে',
-        'general' => 'সাধারণ দোয়া (হাদিস নয়)',
-        _ => 'সাধারণ',
-      };
+    'hadith' => 'হাদিস থেকে',
+    'quran' => 'কুরআন থেকে',
+    'general' => 'সাধারণ দোয়া (হাদিস নয়)',
+    _ => 'সাধারণ',
+  };
 }
