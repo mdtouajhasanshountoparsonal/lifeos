@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lifeos/services/arabic_seed.dart';
 import 'package:lifeos/services/arabic_tts.dart';
+import 'package:lifeos/services/deen_store.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
 import 'package:lifeos/widgets/glass_card.dart';
@@ -96,37 +98,14 @@ class _AlphabetScreenState extends State<AlphabetScreen> {
                         itemCount: letters.length,
                         itemBuilder: (context, i) {
                           final l = letters[i];
-                          return Material(
-                            color: c.cardColor,
-                            borderRadius: BorderRadius.circular(14),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () => _showDetail(c, l),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    l.letter,
-                                    style: TextStyle(
-                                      fontFamily: kArabicFont,
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.w700,
-                                      color: c.glow,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    l.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 10.5,
-                                      color: c.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          return ListenableBuilder(
+                            listenable: Hive.box('deen_arabic').listenable(),
+                            builder: (context, _) {
+                              final mk = 'a:${l.id}';
+                              final known = DeenStore.isArabicKnown(mk);
+                              final hard = DeenStore.isHard(mk);
+                              return _letterTile(c, l, known, hard);
+                            },
                           );
                         },
                       ),
@@ -290,6 +269,60 @@ class _AlphabetScreenState extends State<AlphabetScreen> {
             ),
             const SizedBox(height: 16),
             if (_quranLoaded && _quran[l.id] != null) ..._quranExamples(c, l),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      DeenStore.resolveHardAndKnown('a:${l.id}', 'a:${l.id}');
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.check_circle_rounded, size: 16),
+                    label: const Text(
+                      'জানি ✓',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: c.lowPriority,
+                      side: BorderSide(
+                        color: c.lowPriority.withValues(alpha: 0.6),
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      DeenStore.hardMark('a:${l.id}');
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.warning_amber_rounded, size: 16),
+                    label: const Text(
+                      'কঠিন ⚠️',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: c.mediumPriority,
+                      side: BorderSide(
+                        color: c.mediumPriority.withValues(alpha: 0.6),
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),
               style: FilledButton.styleFrom(
@@ -301,6 +334,43 @@ class _AlphabetScreenState extends State<AlphabetScreen> {
                 'বন্ধ করুন',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _letterTile(AppColors c, ArabicLetterItem l, bool known, bool hard) {
+    return Material(
+      color: c.cardColor,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _showDetail(c, l),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              l.letter,
+              style: TextStyle(
+                fontFamily: kArabicFont,
+                fontSize: 30,
+                fontWeight: FontWeight.w700,
+                color: known ? c.glow : c.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 10.5, color: c.textSecondary),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              known ? '✓' : (hard ? '⚠️' : ''),
+              style: TextStyle(fontSize: 12, color: c.glow),
             ),
           ],
         ),

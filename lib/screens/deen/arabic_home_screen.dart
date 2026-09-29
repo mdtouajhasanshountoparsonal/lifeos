@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lifeos/screens/deen/arabic_alphabet_screen.dart';
 import 'package:lifeos/screens/deen/arabic_harakat_screen.dart';
+import 'package:lifeos/screens/deen/arabic_journey_screen.dart';
 import 'package:lifeos/screens/deen/arabic_words_screen.dart';
 import 'package:lifeos/screens/deen/arabic_teacher_screen.dart';
 import 'package:lifeos/screens/deen/content_store_screen.dart';
@@ -74,7 +75,19 @@ class _ArabicHomeScreenState extends State<ArabicHomeScreen> {
                 ),
                 const SizedBox(height: 16),
                 _progressCard(c),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+                _moduleCard(
+                  c,
+                  emoji: '📊',
+                  title: 'আমার যাত্রা',
+                  subtitle:
+                      'অক্ষর/জোড়া/হরকত/শব্দ/কুরআন — কতটুকু জানা, কোনটা কঠিন',
+                  color: c.glow,
+                  onTap: () =>
+                      Navigator.of(context)
+                          .push(FadeRoute(const ArabicJourneyScreen())),
+                ),
+                const SizedBox(height: 12),
                 _moduleCard(
                   c,
                   emoji: '🔤',
