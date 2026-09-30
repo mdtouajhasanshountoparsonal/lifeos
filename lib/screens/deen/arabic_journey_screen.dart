@@ -7,6 +7,7 @@ import 'package:lifeos/screens/deen/arabic_words_screen.dart';
 import 'package:lifeos/screens/deen/dua_screen.dart';
 import 'package:lifeos/screens/deen/night_routine_screen.dart';
 import 'package:lifeos/screens/deen/quran_words_screen.dart';
+import 'package:lifeos/screens/deen/review_screen.dart';
 import 'package:lifeos/screens/deen/weakness_challenge_screen.dart';
 import 'package:lifeos/services/arabic_seed.dart';
 import 'package:lifeos/services/arabic_tts.dart';
@@ -14,6 +15,7 @@ import 'package:lifeos/services/arabic_weakness.dart';
 import 'package:lifeos/services/deen_seed.dart';
 import 'package:lifeos/services/deen_store.dart';
 import 'package:lifeos/services/night_routine.dart';
+import 'package:lifeos/services/review_scheduler.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
 import 'package:lifeos/widgets/entrance_item.dart';
@@ -208,6 +210,7 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
                       Hive.box('amal_log').listenable(),
                       Hive.box('salah_log').listenable(),
                       Hive.box('memorization').listenable(),
+                      Hive.box('deen_review').listenable(),
                     ]),
                     builder: (context, _) {
                       final knownSum = cats.fold<int>(0, (s, x) => s + x.known);
@@ -512,10 +515,69 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
                 value: '${_bnNum(DeenStore.memorizedTodayIds().length)} টি',
                 done: DeenStore.memorizedTodayIds().isNotEmpty,
               ),
+              const SizedBox(height: 12),
+              Divider(height: 1, color: c.textSecondary.withValues(alpha: 0.12)),
+              const SizedBox(height: 4),
+              _reviewRow(c),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  /// 🔁 পুনরাল্লাপ — "জানি ✓" দেওয়া শব্দ ভুলে যাওয়ার আগে আবার আসে।
+  Widget _reviewRow(AppColors c) {
+    final due = ReviewScheduler.dueCount;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: due == 0
+            ? null
+            : () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const ReviewScreen()),
+              ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              Icon(
+                Icons.autorenew_rounded,
+                size: 17,
+                color: due > 0 ? c.glow : c.lowPriority,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'পুনরাল্লাপ',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ),
+              Text(
+                due == 0 ? 'আজ শেষ ✓' : '${_bnNum(due)} টি বাকি',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  color: due > 0 ? c.glow : c.lowPriority,
+                ),
+              ),
+              if (due > 0) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 17,
+                  color: c.textSecondary,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 

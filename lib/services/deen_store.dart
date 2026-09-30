@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lifeos/services/pray_times.dart';
+import 'package:lifeos/services/review_scheduler.dart';
 
 enum SalahMode {
   jamaat('জামাতে'),
@@ -77,6 +78,10 @@ class DeenStore {
       list.add(id);
       _arabic.put('known', list);
     }
+    // "জানি ✓" দিলে পুনরাল্লাপ-তালিকায় ঢোকে (ভুলে যাওয়ার আগে আবার দেখানো)।
+    // আগে-র রেকর্ড থাকলে seed() নিজেই কিছু করে না — তাই বাক্স মুছে যায় না;
+    // কিন্তু unmark করে আবার চাপলে ফেরত এলে নতুন করে তালিকায় ঢুকে।
+    ReviewScheduler.seed(id);
   }
 
   static void arabicUnmark(String id) {

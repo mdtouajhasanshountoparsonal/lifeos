@@ -46,6 +46,7 @@ void main() async {
   await Hive.openBox('deen_meta');
   await Hive.openBox('memorization');
   await Hive.openBox('deen_arabic');
+await Hive.openBox('deen_review');
   await Hive.openBox('content_meta');
   await Hive.openBox('content_data');
   await DeenNotifications.init();
