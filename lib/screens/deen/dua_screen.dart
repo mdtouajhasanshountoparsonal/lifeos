@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:lifeos/screens/deen/dua_word_sheet.dart';
 import 'package:lifeos/services/arabic_quran_text.dart';
 import 'package:lifeos/services/arabic_tts.dart';
 import 'package:lifeos/services/deen_seed.dart';
 import 'package:lifeos/services/deen_store.dart';
+import 'package:lifeos/services/dua_word_analyzer.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
 import 'package:lifeos/widgets/moon_background.dart';
@@ -411,18 +413,16 @@ class _DuaScreenState extends State<DuaScreen> {
                 ),
                 if (d.arabic.isNotEmpty) ...[
                   const SizedBox(height: 6),
+                  _tappableArabic(c, d),
+                  const SizedBox(height: 6),
                   Text(
-                    d.arabic,
-                    textAlign: TextAlign.center,
+                    '👆 যেকোনো শব্দে চাপ দিন — অক্ষর-হরকত ভাঙা ও পড়ার অনুশীলন',
                     style: TextStyle(
-                      fontFamily: kQuranFont,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: c.textPrimary,
-                      height: 1.8,
+                      fontSize: 10.5,
+                      color: c.textSecondary.withValues(alpha: 0.8),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                 ],
                 if (d.count != null && d.count! > 0)
                   Padding(
@@ -475,6 +475,59 @@ class _DuaScreenState extends State<DuaScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// আরবি লাইনকে শব্দে ভেঙে প্রতিটি শব্দ ট্যাপযোগ্য করা — অক্ষর-হরকত ভাঙা,
+  /// পড়ার অনুশীলন ও ভাণ্ডার-অর্থ একই জায়গায়।
+  Widget _tappableArabic(AppColors c, DuaItem d) {
+    final words = DuaWordAnalyzer.splitWords(d.arabic);
+    if (words.isEmpty) {
+      return Text(
+        d.arabic,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: kQuranFont,
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          color: c.textPrimary,
+          height: 1.8,
+        ),
+      );
+    }
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          for (final w in words)
+            GestureDetector(
+              onTap: () => showDuaWordSheet(context, w),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 5,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: c.cardColor.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  w,
+                  style: TextStyle(
+                    fontFamily: kQuranFont,
+                    fontSize: 23,
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary,
+                    height: 1.7,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
