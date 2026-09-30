@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:lifeos/screens/deen/adhkar_screen.dart';
+import 'package:lifeos/screens/deen/arabic_alphabet_screen.dart';
+import 'package:lifeos/screens/deen/arabic_harakat_screen.dart';
+import 'package:lifeos/screens/deen/arabic_words_screen.dart';
+import 'package:lifeos/screens/deen/dua_screen.dart';
+import 'package:lifeos/screens/deen/night_routine_screen.dart';
+import 'package:lifeos/screens/deen/quran_words_screen.dart';
 import 'package:lifeos/screens/deen/weakness_challenge_screen.dart';
 import 'package:lifeos/services/arabic_seed.dart';
 import 'package:lifeos/services/arabic_tts.dart';
 import 'package:lifeos/services/arabic_weakness.dart';
 import 'package:lifeos/services/deen_seed.dart';
 import 'package:lifeos/services/deen_store.dart';
+import 'package:lifeos/services/night_routine.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
 import 'package:lifeos/widgets/entrance_item.dart';
@@ -36,6 +44,10 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
   List<_CatItem>? _cats;
   List<WeakItem> _weak = [];
 
+  /// আজকের আমাল-কার্ডের জন্য — যিকির প্রতিদিন রিসেট হয়, তাই সেটি
+  /// "জানা" হিসাবে নয়, আলাদা দৈনিক রেকর্ড হিসেবে দেখানো হয়।
+  List<AdhkarItem> _adhkar = const [];
+
   @override
   void initState() {
     super.initState();
@@ -48,11 +60,13 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
     final vocabF = ArabicSeed.vocab();
     final harakatF = ArabicSeed.harakat();
     final surahsF = DeenSeed.surahs();
+    final duasF = DeenSeed.duas();
     final letters = await lettersF; // ignore: omit_local_variable_types
     final words = await wordsF;
     final vocab = await vocabF;
     final harakat = await harakatF;
     final surahs = await surahsF;
+    final duas = await duasF;
     final joinKeys = _joinKeys(letters);
 
     int lettersK = 0, lettersH = 0;
@@ -61,6 +75,7 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
     int wordK = 0, wordH = 0;
     int vocabK = 0, vocabH = 0;
     int quranK = 0, quranH = 0;
+    int duaK = 0, duaH = 0;
 
     for (final k in DeenStore.arabicKnown()) {
       if (k.startsWith('a:')) {
@@ -73,6 +88,9 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
         vocabK++;
       } else if (k.startsWith('read:') || k.startsWith('mem:')) {
         quranK++;
+      } else if (k.startsWith('dua-learn:')) {
+        // পুরো দোয়া পড়া — শব্দ-চর্চার গোনায় ঢুকবে না
+        duaK++;
       } else {
         wordK++;
       }
@@ -82,6 +100,8 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
         quranH++;
       } else if (k.startsWith('hard:vocab:')) {
         vocabH++;
+      } else if (k.startsWith('hard:dua')) {
+        duaH++;
       } else if (k.startsWith('hard:')) {
         wordH++;
       } else if (k.startsWith('join')) {
@@ -102,14 +122,17 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
       _CatItem('📖', 'শব্দ চর্চা', wordK, words.length, wordH),
       _CatItem('🗝️', 'কুরআন শব্দ', vocabK, vocab.length, vocabH),
       _CatItem('🕌', 'কুরআন পড়া', quranK, totalAyah, quranH),
+      _CatItem('🤲', 'দুআ', duaK, duas.length, duaH),
     ];
 
     final weak = await WeaknessService.load();
+    final adhkar = await DeenSeed.adhkar();
 
     if (!mounted) return;
     setState(() {
       _cats = cats;
       _weak = weak;
+      _adhkar = adhkar;
     });
   }
 
@@ -180,7 +203,12 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2.5),
                   )
                 : ListenableBuilder(
-                    listenable: Hive.box('deen_arabic').listenable(),
+                    listenable: Listenable.merge([
+                      Hive.box('deen_arabic').listenable(),
+                      Hive.box('amal_log').listenable(),
+                      Hive.box('salah_log').listenable(),
+                      Hive.box('memorization').listenable(),
+                    ]),
                     builder: (context, _) {
                       final knownSum = cats.fold<int>(0, (s, x) => s + x.known);
                       final totalSum = cats.fold<int>(0, (s, x) => s + x.total);
@@ -230,6 +258,8 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
                               child: _catRow(c, cat),
                             ),
                           const SizedBox(height: 12),
+                          _todayAmalCard(c),
+                          const SizedBox(height: 16),
                           Wrap(
                             spacing: 8,
                             runSpacing: 0,
@@ -393,12 +423,169 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
     return '${_bnNum((p * 100).round())}%';
   }
 
+  /// আজকের আমাল — নামাজ, যিকির, ঘুম রুটিন ও কুরআন, এক জায়গায়।
+  Widget _todayAmalCard(AppColors c) {
+    final key = DeenStore.dayKey(DateTime.now());
+    final log = DeenStore.dayLog(key);
+    final salahDone =
+        DeenStore.prayers.where((p) => log[p]?.done ?? false).length;
+    final dhikr = DeenStore.adhkarDoneToday();
+    final morning = _adhkar.where((a) => a.isMorning);
+    final evening = _adhkar.where((a) => a.isEvening);
+    final morningDone = morning.any((a) => dhikr.contains(a.id));
+    final eveningDone = evening.any((a) => dhikr.contains(a.id));
+    final nightDone = DeenStore.nightStepsDoneToday().length;
+    final nightTotal = NightRoutine.order.length;
+    final quranMin = DeenStore.quranMinutesToday();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'আজকের আমাল',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.2,
+            color: c.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'প্রতিদিনের আমল — রেকর্ড, স্কোর নয়',
+          style: TextStyle(fontSize: 10.5, color: c.textSecondary),
+        ),
+        const SizedBox(height: 8),
+        GlassCard(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            children: [
+              _amalRow(
+                c,
+                icon: Icons.mosque_rounded,
+                label: 'নামাজ',
+                value: '${_bnNum(salahDone)}/${_bnNum(DeenStore.prayers.length)}',
+                done: salahDone >= DeenStore.prayers.length,
+              ),
+              const SizedBox(height: 10),
+              _amalRow(
+                c,
+                icon: Icons.auto_awesome_rounded,
+                label: 'যিকির',
+                value: morningDone && eveningDone
+                    ? 'সকাল ✓ সন্ধ্যা ✓'
+                    : morningDone
+                    ? 'সন্ধ্যা ○'
+                    : 'সকাল ○',
+                done: morningDone && eveningDone,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const AdhkarScreen()),
+                ),
+              ),
+              const SizedBox(height: 10),
+              _amalRow(
+                c,
+                icon: Icons.bedtime_rounded,
+                label: 'ঘুম রুটিন',
+                value: '${_bnNum(nightDone)}/${_bnNum(nightTotal)} ধাপ',
+                done: nightDone >= nightTotal && nightTotal > 0,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const NightRoutineScreen(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              _amalRow(
+                c,
+                icon: Icons.menu_book_rounded,
+                label: 'কুরআন পড়া',
+                value: '${_bnNum(quranMin)} মিনিট',
+                done: quranMin > 0,
+              ),
+              const SizedBox(height: 10),
+              _amalRow(
+                c,
+                icon: Icons.psychology_rounded,
+                label: 'মুখস্থ',
+                value: '${_bnNum(DeenStore.memorizedTodayIds().length)} টি',
+                done: DeenStore.memorizedTodayIds().isNotEmpty,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _amalRow(
+    AppColors c, {
+    required IconData icon,
+    required String label,
+    required String value,
+    required bool done,
+    VoidCallback? onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 17,
+                color: done ? c.lowPriority : c.textSecondary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  color: done ? c.lowPriority : c.textSecondary,
+                ),
+              ),
+              if (onTap != null) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 17,
+                  color: c.textSecondary,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _catRow(AppColors c, _CatItem cat) {
     final pct = cat.total == 0 ? 0.0 : cat.known / cat.total;
     return GlassCard(
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
       borderRadius: BorderRadius.circular(14),
-      child: Row(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: _catTarget(cat.label),
+          child: Row(
         children: [
           Text(cat.emoji, style: const TextStyle(fontSize: 18)),
           const SizedBox(width: 10),
@@ -445,9 +632,45 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
               style: TextStyle(fontSize: 11, color: c.mediumPriority),
             ),
           ],
-        ],
+              if (_catTarget(cat.label) != null)
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 17,
+                  color: c.textSecondary,
+                ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  /// যে ক্যাটাগরিগুলোর নিজস্ব স্ক্রিন আছে, সেগুলোতে চাপ দিলে সেখানে যাওয়া যায়।
+  VoidCallback? _catTarget(String label) {
+    switch (label) {
+      case 'দুআ':
+        return () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const DuaScreen()),
+        );
+      case 'অক্ষর চেনা':
+        return () => Navigator.of(context).push(
+          FadeRoute(const AlphabetScreen()),
+        );
+      case 'হরকত':
+        return () => Navigator.of(context).push(
+          FadeRoute(const ArabicHarakatScreen()),
+        );
+      case 'শব্দ চর্চা':
+        return () => Navigator.of(context).push(
+          FadeRoute(const ArabicWordsScreen()),
+        );
+      case 'কুরআন শব্দ':
+        return () => Navigator.of(context).push(
+          FadeRoute(const QuranWordsScreen()),
+        );
+      default:
+        return null;
+    }
   }
 
   Widget _weakCard(AppColors c, WeakItem w) {

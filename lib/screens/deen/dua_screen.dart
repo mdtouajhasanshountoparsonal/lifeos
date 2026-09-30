@@ -23,6 +23,7 @@ class _DuaScreenState extends State<DuaScreen> {
   String _query = '';
   String _section = 'সব';
   bool _onlySaved = false;
+  bool _onlyLearned = false;
 
   @override
   void initState() {
@@ -46,6 +47,9 @@ class _DuaScreenState extends State<DuaScreen> {
       if (!d.matches(_query)) return false;
       if (_section != 'সব' && d.section != _section) return false;
       if (_onlySaved && !DeenStore.isBookmarked('dua:${d.id}')) return false;
+      if (_onlyLearned && !DeenStore.isArabicKnown('dua-learn:${d.id}')) {
+        return false;
+      }
       return true;
     }).toList();
   }
@@ -163,6 +167,26 @@ class _DuaScreenState extends State<DuaScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Row(
+                    children: [
+                      _toggleChip(
+                        c,
+                        '🔖 বুকমার্ক',
+                        _onlySaved,
+                        () => setState(() => _onlySaved = !_onlySaved),
+                      ),
+                      const SizedBox(width: 8),
+                      _toggleChip(
+                        c,
+                        '✓ আমার পড়া',
+                        _onlyLearned,
+                        () => setState(() => _onlyLearned = !_onlyLearned),
+                      ),
+                    ],
+                  ),
+                ),
                 Expanded(
                   child: _loaded
                       ? _list(c)
@@ -196,6 +220,33 @@ class _DuaScreenState extends State<DuaScreen> {
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: selected ? Colors.black : c.textPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _toggleChip(
+    AppColors c,
+    String label,
+    bool active,
+    VoidCallback onTap,
+  ) {
+    return Material(
+      color: active ? c.glow.withValues(alpha: 0.16) : c.cardColor,
+      borderRadius: BorderRadius.circular(11),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(11),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: active ? c.glow : c.textSecondary,
             ),
           ),
         ),

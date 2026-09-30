@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lifeos/services/arabic_seed.dart';
+import 'package:lifeos/services/deen_seed.dart';
 import 'package:lifeos/services/deen_store.dart';
 
 /// একটি মডিউলের ব্যক্তিগত রেকর্ড (known/total) — স্কোর নয়, কতটুকু জানি ✓।
@@ -71,9 +72,11 @@ class DeenProgress {
     final harakat = await ArabicSeed.harakat();
     final roots = await ArabicSeed.roots();
     final grammar = await ArabicSeed.grammar();
+    final duas = await DeenSeed.duas();
 
     final known = DeenStore.arabicKnown();
     final wordIds = {for (final w in words) w.id};
+    final duaIds = {for (final d in duas) 'dua-learn:${d.id}'};
 
     final knownWords = known.where(wordIds.contains).length;
     final knownVocab = known.where((k) => k.startsWith('vocab:')).length;
@@ -98,6 +101,11 @@ class DeenProgress {
         known: knownGrammar,
         total: grammar.length,
       ),
+      ModuleProgress(
+        name: 'দুআ',
+        known: known.where(duaIds.contains).length,
+        total: duas.length,
+      ),
       ModuleProgress(name: 'মুখস্থ সব', known: memorized, total: 0),
     ];
 
@@ -114,6 +122,13 @@ class DeenProgress {
   static String _nextStep(List<ModuleProgress> m) {
     final words = m[2];
     final vocab = m[3];
+    final duas = m.firstWhere(
+      (x) => x.name == 'দুআ',
+      orElse: () => const ModuleProgress(name: '', known: 0, total: 0),
+    );
+    if (!duas.knownAll && duas.total > 0) {
+      return 'দুআ মডিউলে ${duas.total - duas.known} টি দোয়া বাকি — দোয়া পড়া ও "পড়েছি ✓" দিয়ে এগোও।';
+    }
     if (!words.knownAll) {
       return 'শব্দ পড়া মডিউলে ${words.total - words.known} টি শব্দ বাকি — সেগুলো "জানি ✓" করে এগোও।';
     }
