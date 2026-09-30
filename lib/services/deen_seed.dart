@@ -27,6 +27,10 @@ class PostPrayerStep {
 }
 
 /// 🤲 দুআ লাইব্রেরির একটি item।
+///
+/// `authenticity`: sahih | hasan | quran — প্রতিটি item-এ source-সহ যাচাই।
+/// `count`: source-অনুযায়ী পড়ার প্রস্তাবিত সংখ্যা (null = নির্দিষ্ট নয়)।
+/// `level`: আরবি শেখার গভীরতা (১ = ছোট/মুখস্থ, ৩ = দীর্ঘ পাঠ্য)।
 class DuaItem {
   final String id;
   final String section;
@@ -35,6 +39,9 @@ class DuaItem {
   final String transliteration;
   final String bangla;
   final String source;
+  final String authenticity;
+  final int? count;
+  final int level;
 
   const DuaItem({
     required this.id,
@@ -44,9 +51,20 @@ class DuaItem {
     required this.transliteration,
     required this.bangla,
     required this.source,
+    this.authenticity = '',
+    this.count,
+    this.level = 1,
   });
 
   bool get hasSource => source.trim().isNotEmpty;
+  bool get isQuranic => type == 'quran';
+
+  String get authenticityLabel => switch (authenticity) {
+    'sahih' => 'সহিহ',
+    'hasan' => 'হাসান',
+    'quran' => 'কুরআন',
+    _ => '',
+  };
 
   bool matches(String q) {
     final t = q.trim().toLowerCase();
@@ -54,7 +72,8 @@ class DuaItem {
     return bangla.toLowerCase().contains(t) ||
         arabic.contains(t) ||
         transliteration.toLowerCase().contains(t) ||
-        source.toLowerCase().contains(t);
+        source.toLowerCase().contains(t) ||
+        section.toLowerCase().contains(t);
   }
 }
 
@@ -244,6 +263,9 @@ class DeenSeed {
           transliteration: (m['transliteration'] as String? ?? '').trim(),
           bangla: (m['bangla'] as String? ?? '').trim(),
           source: (m['source'] as String? ?? '').trim(),
+          authenticity: (m['authenticity'] as String? ?? '').trim(),
+          count: (m['count'] as num?)?.toInt(),
+          level: ((m['level'] as num?) ?? 1).toInt(),
         ),
       );
     }

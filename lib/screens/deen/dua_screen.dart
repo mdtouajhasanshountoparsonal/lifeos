@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lifeos/services/arabic_quran_text.dart';
+import 'package:lifeos/services/arabic_tts.dart';
 import 'package:lifeos/services/deen_seed.dart';
 import 'package:lifeos/services/deen_store.dart';
 import 'package:lifeos/theme/app_theme.dart';
@@ -245,12 +246,43 @@ class _DuaScreenState extends State<DuaScreen> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            '${d.section} · ${d.hasSource ? d.source : 'source নেই'}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: c.textSecondary,
-                            ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (_authColor(d.authenticity) != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: Text(
+                                    d.authenticityLabel,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: _authColor(d.authenticity),
+                                    ),
+                                  ),
+                                ),
+                              if (d.count != null && d.count! > 0)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: Text(
+                                    '× ${_bn(d.count!)}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: c.mediumPriority,
+                                    ),
+                                  ),
+                                ),
+                              Expanded(
+                                child: Text(
+                                  '${d.section} · ${d.hasSource ? d.source : 'source নেই'}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: c.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -346,6 +378,16 @@ class _DuaScreenState extends State<DuaScreen> {
                         ),
                       ),
                     ),
+                    IconButton(
+                      tooltip: 'উচ্চারণ শুনুন',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => speakPron(d.arabic),
+                      icon: Icon(
+                        Icons.volume_up_rounded,
+                        size: 20,
+                        color: c.glow,
+                      ),
+                    ),
                     ListenableBuilder(
                       listenable: Hive.box('deen_meta').listenable(),
                       builder: (context, _) {
@@ -382,6 +424,28 @@ class _DuaScreenState extends State<DuaScreen> {
                   ),
                   const SizedBox(height: 12),
                 ],
+                if (d.count != null && d.count! > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: c.glow.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '🔢 ${_bn(d.count!)} বার',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: c.glow,
+                        ),
+                      ),
+                    ),
+                  ),
                 if (d.transliteration.isNotEmpty) ...[
                   _label(c, 'উচ্চারণ'),
                   Text(
@@ -405,11 +469,77 @@ class _DuaScreenState extends State<DuaScreen> {
                 ),
                 const SizedBox(height: 14),
                 _sourceChip(c, d.source, d.hasSource, 'dua:${d.id}'),
+                const SizedBox(height: 12),
+                _learnedRow(c, d),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Color? _authColor(String authenticity) {
+    return switch (authenticity) {
+      'sahih' => const Color(0xFF2E7D32),
+      'hasan' => const Color(0xFFB26A00),
+      'quran' => const Color(0xFF1565C0),
+      _ => null,
+    };
+  }
+
+  /// জীবনবৃত্তান্ত digit -> বাংলা সংখ্যা।
+  static String _bn(int n) {
+    const en = '0123456789';
+    const bn = '০১২৩৪৫৬৭৮৯';
+    return n.toString().split('').map(
+      (ch) => en.contains(ch) ? bn[en.indexOf(ch)] : ch,
+    ).join();
+  }
+
+  Widget _learnedRow(AppColors c, DuaItem d) {
+    return ListenableBuilder(
+      listenable: Hive.box('deen_meta').listenable(),
+      builder: (context, _) {
+        final learned = DeenStore.isArabicKnown('dua-learn:${d.id}');
+        return Material(
+          color: learned ? c.glow.withValues(alpha: 0.16) : c.cardColor,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => learned
+                ? DeenStore.arabicUnmark('dua-learn:${d.id}')
+                : DeenStore.arabicMark('dua-learn:${d.id}'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  Icon(
+                    learned
+                        ? Icons.check_circle_rounded
+                        : Icons.radio_button_unchecked_rounded,
+                    size: 18,
+                    color: learned ? c.glow : c.textSecondary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      learned
+                          ? 'মুখস্থ করার চেষ্টা হচ্ছে… ট্যাপ করলে বাদ যাবে'
+                          : 'আমি মুখস্থ করেছি ✓',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: learned ? Colors.black : c.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
