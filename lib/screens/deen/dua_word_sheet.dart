@@ -18,6 +18,72 @@ Future<void> showDuaWordSheet(BuildContext context, String word) {
   );
 }
 
+/// আরবি লাইন শব্দে ভেঙে প্রতিটি শব্দকে ট্যাপযোগ্য করা — অক্ষর-হরকত ভাঙা,
+/// পড়ার অনুশীলন ও ভাণ্ডার-অর্থ একই জায়গায়।
+class DuaTappableArabic extends StatelessWidget {
+  final String text;
+  final double fontSize;
+
+  const DuaTappableArabic({
+    super.key,
+    required this.text,
+    this.fontSize = 23,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppTheme.of(context);
+    final words = DuaWordAnalyzer.splitWords(text);
+    if (words.isEmpty) {
+      return Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: kQuranFont,
+          fontSize: fontSize,
+          fontWeight: FontWeight.w700,
+          color: c.textPrimary,
+          height: 1.8,
+        ),
+      );
+    }
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          for (final w in words)
+            GestureDetector(
+              onTap: () => showDuaWordSheet(context, w),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 5,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: c.cardColor.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  w,
+                  style: TextStyle(
+                    fontFamily: kQuranFont,
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary,
+                    height: 1.7,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class DuaWordSheet extends StatefulWidget {
   final String word;
 

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:lifeos/screens/deen/night_routine_screen.dart';
 import 'package:lifeos/services/deen_seed.dart';
 import 'package:lifeos/services/deen_store.dart';
+import 'package:lifeos/services/night_routine.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
 import 'package:lifeos/widgets/glass_card.dart';
@@ -106,6 +108,8 @@ class _AdhkarScreenState extends State<AdhkarScreen> {
                         children: [
                           _todayAmalCard(c),
                           const SizedBox(height: 14),
+                          _routineCard(c),
+                          const SizedBox(height: 14),
                           Text(
                             _morning ? 'সকালের যিকির' : 'সন্ধ্যার যিকির',
                             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: c.textSecondary),
@@ -187,6 +191,78 @@ class _AdhkarScreenState extends State<AdhkarScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// 🌙 ঘুম ও সকাল রুটিন — ধাপে ধাপে সাজানো, আলাদা রেকর্ড।
+  Widget _routineCard(AppColors c) {
+    final done = DeenStore.nightStepsDoneToday();
+    final all = NightRoutine.order.length;
+    final finished = done.length.clamp(0, all);
+    final isNight = DateTime.now().hour >= 20 || DateTime.now().hour < 5;
+    return Material(
+      color: c.cardColor,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const NightRoutineScreen()),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: c.glow.withValues(alpha: 0.14),
+                ),
+                child: Icon(
+                  isNight ? Icons.bedtime_rounded : Icons.wb_twilight_rounded,
+                  size: 20,
+                  color: c.glow,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '🌙 ঘুম ও সকাল রুটিন',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: c.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'আয়াতুল কুরসি · ৩ কুল · ঘুমের দোয়া — ধাপে ধাপে',
+                      style: TextStyle(fontSize: 11, color: c.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '$_bnNum(finished.toString())/$_bnNum(all.toString())',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: finished == all ? c.lowPriority : c.glow,
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: c.textSecondary,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

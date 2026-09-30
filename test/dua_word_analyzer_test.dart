@@ -30,4 +30,23 @@ void main() {
     expect(i.segments.length, 6);
     expect(i.segments[1].marks.single.name, 'সুকুন');
   });
+
+  test('splitWords drops separator dots and trims waqf marks', () {
+    // ৩ কুল-এর মতো "·" বিভাজক ও কুরআনের ۖ যতিচিহ্ন শব্দ হয়ে যায় না
+    final w = DuaWordAnalyzer.splitWords('قُلْ هُوَ اللَّهُ أَحَدٌ · قُلْ أَعُوذُ بِرَبِّ النَّاسِ');
+    expect(w, [
+      'قُلْ',
+      'هُوَ',
+      'اللَّهُ',
+      'أَحَدٌ',
+      'قُلْ',
+      'أَعُوذُ',
+      'بِرَبِّ',
+      'النَّاسِ',
+    ]);
+    for (final t in w) {
+      expect(DuaWordAnalyzer.analyze(t).segments, isNotEmpty, reason: t);
+    }
+    expect(DuaWordAnalyzer.splitWords('ۖ · ۗ'), isEmpty);
+  });
 }

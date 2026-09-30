@@ -410,7 +410,7 @@ class DeenStore {
   static List<String> adhkarDoneToday() {
     final v = _todayAmalMap()['adhkar_done'];
     if (v is List) return List<String>.from(v);
-    return const [];
+    return <String>[];
   }
 
   static bool isAdhkarDone(String id) => adhkarDoneToday().contains(id);
@@ -426,6 +426,30 @@ class DeenStore {
       list.add(id);
     }
     day['adhkar_done'] = list;
+    _amal.put(dayKey(DateTime.now()), day);
+  }
+
+  /// রুটিনের আজকের শেষ ধাপগুলো (`{day}.night_done`) — যিকির-স্ট্যাট থেকে আলাদা,
+  /// তাই "আজকের আমল"-এর যিকির গণনা বাড়ে না।
+  static List<String> nightStepsDoneToday() {
+    final v = _todayAmalMap()['night_done'];
+    if (v is List) return List<String>.from(v);
+    return <String>[];
+  }
+
+  static bool isNightStepDone(String id) => nightStepsDoneToday().contains(id);
+
+  static void toggleNightStep(String id) {
+    final day = Map<String, dynamic>.from(
+      _amal.get(dayKey(DateTime.now()), defaultValue: {}) as Map,
+    );
+    final list = nightStepsDoneToday();
+    if (list.contains(id)) {
+      list.remove(id);
+    } else {
+      list.add(id);
+    }
+    day['night_done'] = list;
     _amal.put(dayKey(DateTime.now()), day);
   }
 

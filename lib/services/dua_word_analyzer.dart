@@ -69,12 +69,33 @@ class DuaWordAnalyzer {
       .replaceAll(alefForms, '\u0627')
       .trim();
 
+  /// আরবি বর্ণ আছে কি না — `·`, `ۖ` ও একা দাঁড়ানো যতিচিহ্ন বাদ দিতে।
+  static bool _hasLetter(String s) => s.runes.any(_isLetter);
+
+  /// টোকেনের দুই প্রান্তের যতিচিহ্ন (·, ۖ, ﴿) সরায় — কিন্তু হরকত রেখে দেয়,
+  /// কারণ শেষের কাসরা/সুকুন উচিত বদলে।
+  static String _trimMarks(String s) {
+    bool keep(int c) => _isLetter(c) || markNames.containsKey(String.fromCharCode(c));
+    var start = 0;
+    var end = s.length;
+    while (start < end && !keep(s.codeUnitAt(start))) {
+      start++;
+    }
+    while (end > start && !keep(s.codeUnitAt(end - 1))) {
+      end--;
+    }
+    return s.substring(start, end);
+  }
+
   /// দোয়ার লাইনকে শব্দে ভাঙা (RTL-এর জন্য মিলিয়ে)।
-  static List<String> splitWords(String arabic) => arabic
-      .split(RegExp(r'\s+'))
-      .map((w) => w.trim())
-      .where((w) => w.isNotEmpty)
-      .toList();
+  static List<String> splitWords(String arabic) {
+    final out = <String>[];
+    for (final raw in arabic.split(RegExp(r'\s+'))) {
+      final w = _trimMarks(raw.trim());
+      if (w.isNotEmpty && _hasLetter(w)) out.add(w);
+    }
+    return out;
+  }
 
   /// একটি শব্দ অক্ষর + চিহ্নে ভাঙা।
   static DuaWordInfo analyze(String raw) {
