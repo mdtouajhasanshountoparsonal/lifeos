@@ -14,8 +14,9 @@ import 'package:lifeos/services/arabic_tts.dart';
 import 'package:lifeos/services/arabic_weakness.dart';
 import 'package:lifeos/services/deen_seed.dart';
 import 'package:lifeos/services/deen_store.dart';
+import 'package:lifeos/services/dua_recommender.dart';
 import 'package:lifeos/services/night_routine.dart';
-import 'package:lifeos/services/review_scheduler.dart';
+import 'package:lifeos/services/review_content.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
 import 'package:lifeos/widgets/entrance_item.dart';
@@ -49,6 +50,12 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
   /// আজকের আমাল-কার্ডের জন্য — যিকির প্রতিদিন রিসেট হয়, তাই সেটি
   /// "জানা" হিসাবে নয়, আলাদা দৈনিক রেকর্ড হিসেবে দেখানো হয়।
   List<AdhkarItem> _adhkar = const [];
+
+  /// আজকের দোয়া-সুপারিশ (যাচাইকৃত ডেটা থেকে)।
+  DuaSuggestion? _todayDua;
+
+  /// আজ ধরা পড়বে এমন পুনরাল্লাপ এককের সংখ্যা।
+  int _dueReview = 0;
 
   @override
   void initState() {
@@ -129,12 +136,16 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
 
     final weak = await WeaknessService.load();
     final adhkar = await DeenSeed.adhkar();
+    final todayDua = await DuaRecommender.today();
+    final dueReview = await ReviewContent.dueCount();
 
     if (!mounted) return;
     setState(() {
       _cats = cats;
       _weak = weak;
       _adhkar = adhkar;
+      _todayDua = todayDua;
+      _dueReview = dueReview;
     });
   }
 
@@ -519,6 +530,10 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
               Divider(height: 1, color: c.textSecondary.withValues(alpha: 0.12)),
               const SizedBox(height: 4),
               _reviewRow(c),
+              const SizedBox(height: 6),
+              Divider(height: 1, color: c.textSecondary.withValues(alpha: 0.12)),
+              const SizedBox(height: 4),
+              _todayDuaRow(c),
             ],
           ),
         ),
@@ -526,9 +541,57 @@ class _ArabicJourneyScreenState extends State<ArabicJourneyScreen> {
     );
   }
 
+  /// 🤖 আজকের দোয়া — যাচাইকৃত ডেটা থেকে অবস্থা অনুযায়ী বাছাই।
+  Widget _todayDuaRow(AppColors c) {
+    final s = _todayDua;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const DuaScreen()),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              Icon(Icons.auto_awesome_rounded, size: 17, color: c.glow),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'আজকের দোয়া',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: c.textPrimary,
+                      ),
+                    ),
+                    if (s != null)
+                      Text(
+                        s.reason,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 10.5, color: c.textSecondary),
+                      ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, size: 17, color: c.textSecondary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   /// 🔁 পুনরাল্লাপ — "জানি ✓" দেওয়া শব্দ ভুলে যাওয়ার আগে আবার আসে।
   Widget _reviewRow(AppColors c) {
-    final due = ReviewScheduler.dueCount;
+    // শুধু যেসব একক সত্যিই পুনরাল্লাপ স্ক্রিনে দেখানো যায় তার সংখ্যা,
+    // নইলে ব্যাজ সংখ্যা বেশি দেখিয়ে খালি স্ক্রিনে পৌঁছে দিত।
+    final due = _dueReview;
     return Material(
       color: Colors.transparent,
       child: InkWell(

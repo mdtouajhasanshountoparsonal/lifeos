@@ -33,9 +33,92 @@ class DuaWordInfo {
   });
 }
 
+/// একটি শব্দের বর্ণ-ভিত্তিক উচ্চারণ-গাইড।
+class DuaSyllable {
+  /// তাশকিলসহ যেমন লেখা আছে — আলিফ-লাম-মীম সাজানো।
+  final String glyph;
+  final String letter;
+  final String reading;
+  final String bangla;
+  final List<DuaMark> marks;
+
+  const DuaSyllable({
+    required this.glyph,
+    required this.letter,
+    required this.reading,
+    required this.bangla,
+    required this.marks,
+  });
+
+  /// এই অংশে যে হরকতগুলো আছে (যেমন ফাতহা, কাসরা)।
+  String get markNames => marks.map((m) => m.name).join(', ');
+}
+
+class DuaPronunciation {
+  final String base;
+  final List<DuaSyllable> syllables;
+
+  const DuaPronunciation({required this.base, required this.syllables});
+}
+
+/// একটি দোয়ার যেকোনো শব্দের উচ্চারণ-গাইড — যাচাইকৃত অক্ষর-পড়া থেকে।
+class DuaPronouncer {
+  DuaPronouncer._();
+
+  static final Map<String, DuaPronunciation?> _cache = {};
+
+  /// আরবি বর্ণ কোড-রেঞ্জ।
+  static bool _isLetter(int c) => c >= 0x0621 && c <= 0x064A;
+
+  static Future<DuaPronunciation?> of(String raw) async {
+    // হরকত এখানে ফেলা যাবে না — উচ্চারণ তো হরকত দিয়েই বোঝা যায়।
+    final key = raw.trim();
+    if (key.isEmpty || !key.runes.any(_isLetter)) return null;
+    if (_cache.containsKey(key)) return _cache[key];
+    final info = DuaWordAnalyzer.analyze(key);
+    return _cache[key] = await DuaWordAnalyzer.pronunciation(info);
+  }
+
+  /// একটি লাইনের শব্দগুলোর গাইড — দোয়া একসাথে বর্ণে ভাঙলে তালিকা বড় হয়ে
+  /// যায়, তাই পড়ার মতো করে শব্দ ধরে ধরে দেখানো হয়। [limit] এর বেশি নয়।
+  static Future<List<DuaPronunciation>> words(
+    String arabic, {
+    int limit = 8,
+  }) async {
+    final out = <DuaPronunciation>[];
+    final seen = <String>{};
+    for (final raw in DuaWordAnalyzer.splitWords(arabic)) {
+      if (out.length >= limit) break;
+      final g = await of(raw);
+      if (g == null || !seen.add(g.base)) continue;
+      out.add(g);
+    }
+    return out;
+  }
+}
+
 /// দোয়া ↔ আরবি পড়ার সেতু: শব্দ ভাঙা + অ্যাপের যাচাইকৃত শব্দ-ভাণ্ডারে খোঁজা।
 class DuaWordAnalyzer {
   DuaWordAnalyzer._();
+
+  /// একটি বর্ণের যাচাইকৃত উচ্চারণ-গাইড অংশ।
+  static Future<DuaPronunciation?> pronunciation(DuaWordInfo info) async {
+    if (info.segments.isEmpty) return null;
+    final parts = <DuaSyllable>[];
+    for (final seg in info.segments) {
+      final letter = await DuaWordLookup.letter(seg.letter);
+      parts.add(
+        DuaSyllable(
+          glyph: seg.glyph,
+          letter: seg.letter,
+          reading: letter?.reading ?? '',
+          bangla: letter?.name ?? '',
+          marks: seg.marks,
+        ),
+      );
+    }
+    return DuaPronunciation(base: info.base, syllables: parts);
+  }
 
   /// হরকত/তাশকিল চিহ্ন → বাংলা নাম।
   static const markNames = <String, String>{

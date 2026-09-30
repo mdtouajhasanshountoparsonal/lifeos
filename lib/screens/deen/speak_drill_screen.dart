@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lifeos/services/arabic_seed.dart';
+import 'package:lifeos/services/arabic_tts.dart';
+import 'package:lifeos/services/deen_seed.dart';
 import 'package:lifeos/services/deen_store.dart';
+import 'package:lifeos/services/dua_word_analyzer.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
 import 'package:lifeos/widgets/glass_card.dart';
@@ -37,10 +40,12 @@ class _SpeakDrillScreenState extends State<SpeakDrillScreen> {
   List<_DrillUnit> _units = [];
   final _showReading = <String>{};
   final _showMeaning = <String>{};
+  final _showGuide = <String>{};
+  final _guideFutures = <String, Future<List<DuaPronunciation>>>{};
   String _filter = 'সব';
   bool _loading = true;
 
-  static const _filters = <String>['সব', 'শব্দ', 'শব্দভাণ্ডার', 'ফাতিহা'];
+  static const _filters = <String>['সব', 'শব্দ', 'শব্দভাণ্ডার', 'দোয়া', 'ফাতিহা'];
 
   @override
   void initState() {
@@ -53,6 +58,7 @@ class _SpeakDrillScreenState extends State<SpeakDrillScreen> {
     final words = await ArabicSeed.words();
     final vocab = await ArabicSeed.vocab();
     final quran = await ArabicSeed.quran();
+    final duas = await DeenSeed.duas();
     final units = <_DrillUnit>[
       for (final w in words)
         if (w.arabic.trim().isNotEmpty && w.reading.trim().isNotEmpty)
@@ -71,6 +77,15 @@ class _SpeakDrillScreenState extends State<SpeakDrillScreen> {
             arabic: v.arabic,
             reading: v.reading,
             bangla: v.bangla,
+          ),
+      for (final d in duas)
+        if (d.arabic.trim().isNotEmpty && d.transliteration.trim().isNotEmpty)
+          _DrillUnit(
+            key: 'said:dua:${d.id}',
+            kind: 'দোয়া',
+            arabic: d.arabic,
+            reading: d.transliteration,
+            bangla: d.bangla,
           ),
       for (final s in quran)
         for (final a in s.ayahs)
@@ -119,7 +134,7 @@ class _SpeakDrillScreenState extends State<SpeakDrillScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                     child: Text(
-                      'আরবি দেখ → পড়া/অর্থ লুকানো → নিজে বলে পাস করো → তারপর দেখো। শোনার audio এখনো নেই — নিজের পড়াটাই নিজের শোনা।',
+                      'আরবি দেখ → নিজে বলে পাস করো → তারপর দেখো। 🔊 চাপলে ডিভাইসের TTS থেকে শোনাবে — এটি রেকর্ড করা কারীর নুরানি নয়, তাই কার্ও কণ্ঠস্বর আলাদা। কোনো মাইক, স্কোর বা স্পিচ-জাজমেন্ট নেই।',
                       style: TextStyle(
                         fontSize: 11.5,
                         height: 1.5,
@@ -281,6 +296,27 @@ class _SpeakDrillScreenState extends State<SpeakDrillScreen> {
                   height: 1.5,
                 ),
               ),
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => speakPron(u.arabic),
+                  icon: Icon(Icons.volume_up_rounded, size: 16, color: c.glow),
+                  label: Text(
+                    '🔊 পুরোটা শোনাও',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: c.glow,
+                    ),
+                  ),
+                ),
+              ),
+              if (u.kind == 'দোয়া') ...[
+                const SizedBox(height: 4),
+                _guideToggle(c, u),
+                if (_showGuide.contains(u.key)) _guide(c, u),
+              ],
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -392,6 +428,123 @@ class _SpeakDrillScreenState extends State<SpeakDrillScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// দোয়ার শব্দগুলোর গাইড — পড়ার মতো শব্দ ধরে ধরে।
+  Future<List<DuaPronunciation>> _guideFor(_DrillUnit u) =>
+      _guideFutures.putIfAbsent(u.key, () => DuaPronouncer.words(u.arabic));
+
+  /// বর্ণ-ভিত্তিক গাইড — যাচাইকৃত অক্ষর-পড়া, কোনো অনুমান নেই।
+  Widget _guideToggle(AppColors c, _DrillUnit u) {
+    final open = _showGuide.contains(u.key);
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton.icon(
+        onPressed: () => setState(() {
+          if (open) {
+            _showGuide.remove(u.key);
+          } else {
+            _showGuide.add(u.key);
+          }
+        }),
+        icon: Icon(
+          open ? Icons.expand_less_rounded : Icons.spellcheck_rounded,
+          size: 16,
+          color: c.mediumPriority,
+        ),
+        label: Text(
+          open ? 'অক্ষর-ভাঙা লুকাও' : '🔤 অক্ষরে অক্ষরে শোনাও',
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w700,
+            color: c.mediumPriority,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _guide(AppColors c, _DrillUnit u) {
+    return FutureBuilder<List<DuaPronunciation>>(
+      future: _guideFor(u),
+      builder: (context, snap) {
+        final words = snap.data;
+        if (snap.connectionState == ConnectionState.waiting) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'অক্ষর ভাঙা হচ্ছে…',
+              style: TextStyle(fontSize: 11, color: c.textSecondary),
+            ),
+          );
+        }
+        if (words == null || words.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            for (final w in words) ...[
+              Text(
+                w.base,
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  fontFamily: kArabicFont,
+                  fontSize: 16,
+                  height: 1.7,
+                  color: c.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final s in w.syllables)
+                    _chip(c, s),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
+            Text(
+              'প্রতিটি অক্ষরে চাপলে ডিভাইসের TTS থেকে শোনাবে। যেসব অক্ষরের পড়া অ্যাপে নেই, সেখানে কিছু দেখানো হয়নি — ভুল পড়া দেখাবো না।',
+              style: TextStyle(
+                fontSize: 10,
+                height: 1.4,
+                color: c.textSecondary,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _chip(AppColors c, DuaSyllable s) {
+    return Tooltip(
+      message: s.reading.isEmpty ? s.letter : '${s.reading}${s.markNames.isEmpty ? '' : ' • ${s.markNames}'}',
+      child: Material(
+        color: c.cardColor.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(9),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(9),
+          onTap: () => speakPron(s.letter),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            child: Text(
+              s.glyph,
+              style: TextStyle(
+                fontFamily: kArabicFont,
+                fontSize: 18,
+                height: 1.5,
+                color: s.reading.isEmpty
+                    ? c.textSecondary
+                    : c.textPrimary,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 

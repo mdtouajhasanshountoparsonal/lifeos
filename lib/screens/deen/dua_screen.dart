@@ -4,6 +4,7 @@ import 'package:lifeos/screens/deen/dua_word_sheet.dart';
 import 'package:lifeos/services/arabic_tts.dart';
 import 'package:lifeos/services/deen_seed.dart';
 import 'package:lifeos/services/deen_store.dart';
+import 'package:lifeos/services/dua_recommender.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
 import 'package:lifeos/widgets/moon_background.dart';
@@ -25,6 +26,9 @@ class _DuaScreenState extends State<DuaScreen> {
   bool _onlySaved = false;
   bool _onlyLearned = false;
 
+  /// আজকের অবস্থা-ভিত্তিক সুপারিশ (শুধু যাচাইকৃত ডেটা থেকে)।
+  DuaSuggestion? _suggest;
+
   @override
   void initState() {
     super.initState();
@@ -34,10 +38,12 @@ class _DuaScreenState extends State<DuaScreen> {
   Future<void> _load() async {
     final duas = await DeenSeed.duas();
     final sections = await DeenSeed.duaSections();
+    final suggest = await DuaRecommender.today();
     if (!mounted) return;
     setState(() {
       _duas = duas;
       _sections = sections;
+      _suggest = suggest;
       _loaded = true;
     });
   }
@@ -227,6 +233,74 @@ class _DuaScreenState extends State<DuaScreen> {
     );
   }
 
+  /// 🤖 আজকের সুপারিশ — কেন এই দোয়া, সেটা স্পষ্ট লেখা থাকে।
+  Widget _suggestionCard(AppColors c, DuaSuggestion s) {
+    final d = s.dua;
+    return Material(
+      color: c.glow.withValues(alpha: 0.09),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _detail(context, d),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.auto_awesome_rounded, size: 15, color: c.glow),
+                  const SizedBox(width: 6),
+                  Text(
+                    'আজকের সুপারিশ',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                      color: c.glow,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    d.section,
+                    style: TextStyle(fontSize: 10.5, color: c.textSecondary),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                d.transliteration,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  height: 1.5,
+                  fontWeight: FontWeight.w700,
+                  color: c.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                s.reason,
+                style: TextStyle(fontSize: 11, height: 1.4, color: c.textSecondary),
+              ),
+              if (s.hardWords.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'কঠিন শব্দ: ${s.hardWords.join(', ')}',
+                  style: TextStyle(fontSize: 10.5, color: c.mediumPriority),
+                ),
+              ],
+              const SizedBox(height: 6),
+              Text(
+                '📚 ${d.hasSource ? d.source : 'source নেই'}',
+                style: TextStyle(fontSize: 10, color: c.textSecondary),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _toggleChip(
     AppColors c,
     String label,
@@ -264,11 +338,18 @@ class _DuaScreenState extends State<DuaScreen> {
         ),
       );
     }
+    final showSuggest = _query.isEmpty && _section == 'সব' && !_onlySaved && !_onlyLearned;
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-      itemCount: items.length,
+      itemCount: items.length + (showSuggest && _suggest != null ? 1 : 0),
       itemBuilder: (context, i) {
-        final d = items[i];
+        if (showSuggest && _suggest != null && i == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _suggestionCard(c, _suggest!),
+          );
+        }
+        final d = items[showSuggest && _suggest != null ? i - 1 : i];
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Material(

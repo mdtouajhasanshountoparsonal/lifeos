@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:lifeos/services/ai_settings.dart';
 import 'package:lifeos/services/arabic_seed.dart';
 import 'package:lifeos/services/deen_progress.dart';
+import 'package:lifeos/services/dua_recommender.dart';
 
 /// আরবি শিক্ষকের উত্তর — offline/local data প্রথমে, ইচ্ছা হলে Gemini।
 class TeacherReply {
@@ -140,6 +141,28 @@ class ArabicTeacher {
         body:
             '$lines\n\n🎯 পরের ধাপ: ${s.nextStep}\n📝 আজ শিক্ষকের কাছে ${_bn(s.questionsToday)} বার প্রশ্ন করেছেন।\n\nরেকর্ড — বিচার নয়। নিজের গতিতে এগোন।',
       );
+    }
+
+    // ৪¾) অবস্থা-ভিত্তিক দোয়া সুপারিশ — কেবল যাচাইকৃত dua.json থেকে।
+    if (t.contains('দোয়া') ||
+        t.contains('duaa') ||
+        t.contains('dua') ||
+        t.contains('সুপারিশ') ||
+        t.contains('recommend') ||
+        t.contains('কোন দোয়া')) {
+      final s = await DuaRecommender.today();
+      if (s != null) {
+        final d = s.dua;
+        final extra = s.hardWords.isEmpty
+            ? ''
+            : '\n🩹 তোমার কঠিন শব্দ: ${s.hardWords.join(', ')}';
+        return TeacherReply(
+          title: 'আজকের দোয়া: ${d.transliteration.split(';').first}',
+          arabic: d.arabic,
+          body:
+              '${d.bangla}\n\n📚 সূত্র: ${d.hasSource ? d.source : 'source নেই'}${d.hasSource && d.authenticity.isNotEmpty ? ' (${d.authenticityLabel})' : ''}\n📂 সেকশন: ${d.section}${d.count != null && d.count! > 1 ? '\n🔁 ${d.count} বার' : ''}\n\n🤖 কেন এটা: ${s.reason}$extra\n\nআমি অ্যাপের সেভ করা যাচাইকৃত দোয়া থেকেই বেছে নিই — নতুন কিছু বানাই না। দোয়ার যেকোনো শব্দে চাপ দিলে অক্ষর-হরকত ভাঙা ও অর্থ পাবে।',
+        );
+      }
     }
 
     // 5) দিকনির্দেশনা

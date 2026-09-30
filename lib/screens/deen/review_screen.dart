@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lifeos/screens/deen/dua_word_sheet.dart';
-import 'package:lifeos/services/arabic_seed.dart';
 import 'package:lifeos/services/arabic_tts.dart';
-import 'package:lifeos/services/deen_seed.dart';
+import 'package:lifeos/services/review_content.dart';
 import 'package:lifeos/services/review_scheduler.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
@@ -24,6 +23,14 @@ class _RevUnit {
     required this.reading,
     required this.bangla,
   });
+
+  factory _RevUnit.of(ReviewUnit u) => _RevUnit(
+    key: u.key,
+    kind: u.kind,
+    arabic: u.arabic,
+    reading: u.reading,
+    bangla: u.bangla,
+  );
 }
 
 /// 🔁 পুনরাল্লাপ — আজকের ধার্য, নিজের লজিকে সাজানো।
@@ -39,6 +46,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
   final Map<String, _RevUnit> _byKey = {};
   List<String> _queue = const [];
   int _i = 0;
+
+  /// শুরুর সংখ্যা — রেট করা একক তালিকা থেকে বেরিয়ে যায়, তাই অগ্রগতি এখানো থেকে হিসাব হয়।
+  int _total = 0;
   bool _revealed = false;
   bool _loading = true;
 
@@ -49,30 +59,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   Future<void> _load() async {
-    final words = await ArabicSeed.words();
-    final vocab = await ArabicSeed.vocab();
+    // আগের সংস্করণে "জানি ✓" দেওয়া এককগুলো এখনো না থাকলে ঢুকিয়ে দেওয়া হয়,
+    // যাতে হালনাগাদের পরেও কারো তালিকা খালি না দেখায়।
+    await ReviewContent.backfill();
     final units = <String, _RevUnit>{
-      for (final w in words)
-        w.id: _RevUnit(
-          key: w.id,
-          kind: 'শব্দ',
-          arabic: w.arabic,
-          reading: w.reading,
-          bangla: w.bangla,
-        ),
-      for (final v in vocab)
-        'vocab:${v.id}': _RevUnit(
-          key: 'vocab:${v.id}',
-          kind: 'শব্দভাণ্ডার',
-          arabic: v.arabic,
-          reading: v.reading,
-          bangla: v.bangla,
-        ),
+      for (final u in await ReviewContent.units()) u.key: _RevUnit.of(u),
     };
-    // আগের সংস্করণের key-ও যোগ করা হলে যাতে সেগুলো হারিয়ে না যায়।
-    for (final d in await _duaUnits()) {
-      units[d.key] = d;
-    }
     final due = ReviewScheduler.dueToday()
         .where((k) => units.containsKey(k))
         .toList();
@@ -82,33 +74,19 @@ class _ReviewScreenState extends State<ReviewScreen> {
         ..clear()
         ..addAll(units);
       _queue = due;
+      _total = due.length;
       _loading = false;
     });
-  }
-
-  Future<List<_RevUnit>> _duaUnits() async {
-    final out = <_RevUnit>[];
-    for (final d in await DeenSeed.duas()) {
-      if (d.transliteration.trim().isEmpty) continue;
-      out.add(
-        _RevUnit(
-          key: 'dua-learn:${d.id}',
-          kind: 'দুআ',
-          arabic: d.arabic,
-          reading: d.transliteration,
-          bangla: d.bangla,
-        ),
-      );
-    }
-    return out;
   }
 
   void _rate(bool easy) {
     final key = _queue[_i.clamp(0, _queue.length - 1)];
     ReviewScheduler.rate(key, easy: easy);
+    final left = [..._queue]..removeAt(_i);
     setState(() {
       _revealed = false;
-      if (_i < _queue.length - 1) _i++;
+      _queue = left;
+      if (_i >= _queue.length) _i = 0;
     });
   }
 
@@ -226,8 +204,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   Widget _progress(AppColors c) {
-    final done = _i;
-    final total = _queue.length;
+    final total = _total;
+    final done = total - _queue.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
