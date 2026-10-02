@@ -8,6 +8,7 @@ import 'package:lifeos/screens/deen/hadith_screen.dart';
 import 'package:lifeos/screens/deen/learn_screen.dart';
 import 'package:lifeos/screens/deen/memorize_screen.dart';
 import 'package:lifeos/screens/deen/routine_editor_screen.dart';
+import 'package:lifeos/screens/rules/rules_home_screen.dart';
 import 'package:lifeos/screens/deen/post_prayer_screen.dart';
 import 'package:lifeos/screens/deen/salah_screen.dart';
 import 'package:lifeos/screens/deen/surah_list_screen.dart';
@@ -55,6 +56,17 @@ class DeenHomeScreen extends StatelessWidget {
                   const _NextPrayerCard(),
                   const SizedBox(height: 18),
                   const _RoutineCard(),
+              const SizedBox(height: 10),
+              ListTile(
+                leading: const Text('🧠', style: TextStyle(fontSize: 20)),
+                title: const Text('Rules & Discipline'),
+                subtitle: const Text('নিজের অঙ্গীকার, Review ও Recovery'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RulesHomeScreen()),
+                ),
+              ),
                   const SizedBox(height: 18),
                   const _TodaySummary(),
                   const SizedBox(height: 18),
