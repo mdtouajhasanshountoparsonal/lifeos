@@ -343,6 +343,50 @@ class _HadithScreenState extends State<HadithScreen> {
                 ],
                 _label(c, 'অর্থ (সারমর্ম)'),
                 Text(h.bangla, style: TextStyle(fontSize: 14.5, height: 1.7, color: c.textPrimary)),
+                if (h.rules.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _label(c, 'নিয়ম'),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final r in h.rules)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('• ', style: TextStyle(height: 1.6)),
+                              Expanded(
+                                child: Text(r, style: TextStyle(fontSize: 13.5, height: 1.6, color: c.textPrimary)),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+                if (h.conditions.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _label(c, 'শর্ত'),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final cnd in h.conditions)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('• ', style: TextStyle(height: 1.6)),
+                              Expanded(
+                                child: Text(cnd, style: TextStyle(fontSize: 13.5, height: 1.6, color: c.textPrimary)),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 14),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

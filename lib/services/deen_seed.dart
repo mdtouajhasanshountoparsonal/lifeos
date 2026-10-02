@@ -87,6 +87,9 @@ class HadithItem {
   final String number;
   final String grade;
 
+  final List<String> rules;
+  final List<String> conditions;
+
   const HadithItem({
     required this.id,
     required this.topic,
@@ -95,6 +98,8 @@ class HadithItem {
     required this.book,
     required this.number,
     required this.grade,
+    this.rules = const [],
+    this.conditions = const [],
   });
 
   bool get hasSource => book.trim().isNotEmpty || number.trim().isNotEmpty;
@@ -285,20 +290,29 @@ class DeenSeed {
     if (_hadiths != null) return _hadiths!;
     final data = await ContentRepository.loadMap('hadith.json');
     final list = <HadithItem>[];
-    for (final h in (data?['hadiths'] as List? ?? const [])) {
-      final m = h as Map<String, dynamic>;
-      list.add(
-        HadithItem(
-          id: (m['id'] as String? ?? '').trim(),
-          topic: (m['topic'] as String? ?? '').trim(),
-          arabic: (m['arabic'] as String? ?? '').trim(),
-          bangla: (m['bangla'] as String? ?? '').trim(),
-          book: (m['book'] as String? ?? '').trim(),
-          number: (m['number'] as String? ?? '').trim(),
-          grade: (m['grade'] as String? ?? '').trim(),
-        ),
-      );
-    }
+      for (final h in (data?['hadiths'] as List? ?? const [])) {
+        final m = h as Map<String, dynamic>;
+        List<String> listStr(dynamic v) {
+          if (v is List) {
+            return List<String>.from(v.map((e) => e.toString().trim())).where((e) => e.isNotEmpty).toList();
+          }
+          if (v is String && v.trim().isNotEmpty) return [v.trim()];
+          return const [];
+        }
+        list.add(
+          HadithItem(
+            id: (m['id'] as String? ?? '').trim(),
+            topic: (m['topic'] as String? ?? '').trim(),
+            arabic: (m['arabic'] as String? ?? '').trim(),
+            bangla: (m['bangla'] as String? ?? '').trim(),
+            book: (m['book'] as String? ?? '').trim(),
+            number: (m['number'] as String? ?? '').trim(),
+            grade: (m['grade'] as String? ?? '').trim(),
+            rules: listStr(m['rules']),
+            conditions: listStr(m['conditions']),
+          ),
+        );
+      }
     _hadiths = list;
     return list;
   }
