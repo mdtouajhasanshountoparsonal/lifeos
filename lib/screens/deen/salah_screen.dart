@@ -116,7 +116,7 @@ class _SalahScreenState extends State<SalahScreen> {
                     ]),
                     builder: (context, _) {
                       final now = DateTime.now();
-                      final today = PrayTimesEngine.compute(
+                      final base = PrayTimesEngine.compute(
                         date: now,
                         lat: DeenStore.lat,
                         lng: DeenStore.lng,
@@ -125,6 +125,11 @@ class _SalahScreenState extends State<SalahScreen> {
                         asr: AsrJuristic.fromKey(DeenStore.asrKey),
                         highLat: HighLatRule.fromKey(DeenStore.highLatKey),
                         offsets: DeenStore.offsets,
+                      );
+                      final today = PrayTimesEngine.withCustomTimes(
+                        base,
+                        now,
+                        customMinutes: DeenStore.customTimes,
                       );
                       return _tab == 0
                             ? _todayView(context, c, now, today)
@@ -540,6 +545,10 @@ class _SettingsSheetState extends State<_SettingsSheet> {
   final Map<String, bool> _notifToggles = {
     for (final p in DeenStore.prayers) p: DeenStore.waqtEnabled(p),
   };
+  /// প্রতি ওয়াক্তের ইউজার-নির্ধারিত সময় (মিনিট)। যা নেই তা হিসাবের।
+  final Map<String, int> _custom = {
+    for (final e in DeenStore.customTimes.entries) e.key.name: e.value,
+  };
   final _latCtrl = TextEditingController(text: DeenStore.lat.toString());
   final _lngCtrl = TextEditingController(text: DeenStore.lng.toString());
   final _tzCtrl = TextEditingController(text: (DeenStore.tzMinutes / 60).toStringAsFixed(0));
@@ -579,6 +588,10 @@ class _SettingsSheetState extends State<_SettingsSheet> {
       enabled: _notifEnabled,
       toggles: _notifToggles,
     );
+    for (final p in DeenStore.prayers) {
+      final k = PrayerKind.values.firstWhere((v) => v.name == p);
+      DeenStore.saveCustomTime(k, _custom[p]);
+    }
     await DeenNotifications.rescheduleAll();
     if (!context.mounted) return;
     Navigator.of(context).pop();
@@ -685,6 +698,17 @@ class _SettingsSheetState extends State<_SettingsSheet> {
               const SizedBox(height: 18),
               _divider(c),
               const SizedBox(height: 16),
+              _label(c, 'প্রতি ওয়াক্তের নির্দিষ্ট সময়'),
+              Text(
+                'জামাতের সময় বা মসজিদের সময়সূচি অনুযায়ী ঠিক করতে পারেন। '
+                'যেটা ঠিক করবেন না সেটা সূর্যের হিসাবেই থাকবে।',
+                style: TextStyle(fontSize: 10.5, height: 1.4, color: c.textSecondary.withValues(alpha: 0.8)),
+              ),
+              const SizedBox(height: 8),
+              for (final p in DeenStore.prayers) _customTimeRow(c, p),
+              const SizedBox(height: 18),
+              _divider(c),
+              const SizedBox(height: 16),
               _label(c, 'সময় স্মরণ (নোটিফিকেশন)'),
               _switchTile(
                 c,
@@ -751,6 +775,90 @@ class _SettingsSheetState extends State<_SettingsSheet> {
 
   Widget _divider(AppColors c) =>
       Divider(height: 1, color: c.textSecondary.withValues(alpha: 0.12));
+
+  /// একটি ওয়াক্তের সময়-সেট করার সারি: হিসাবের সময়, অথবা সেট করা সময় + ফিরিয়ে আন।
+  Widget _customTimeRow(AppColors c, String p) {
+    final kind = PrayerKind.values.firstWhere((v) => v.name == p);
+    final set = _custom[p];
+    final computed = _computedNow().of(kind)!;
+    final shown = set == null ? computed : computedFor(set);
+    final overridden = set != null;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          SizedBox(width: 34, child: Text(_prayerIcons[p]!, style: const TextStyle(fontSize: 17))),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('${_prayerNames[p]} ওয়াক্ত', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: c.textPrimary)),
+                Text(
+                  overridden
+                      ? 'হিসাব: ${_SalahScreenState._tfmt(computed)} → নির্ধারিত'
+                      : 'হিসাব: ${_SalahScreenState._tfmt(computed)}',
+                  style: TextStyle(fontSize: 10.5, color: c.textSecondary.withValues(alpha: 0.85)),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => _pickTime(c, p, kind, set),
+            child: Text(
+              _SalahScreenState._tfmt(shown),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: c.primary),
+            ),
+          ),
+          if (overridden)
+            IconButton(
+              tooltip: 'হিসাবের সময়ে ফেরান',
+              onPressed: () => setState(() => _custom.remove(p)),
+              icon: Icon(Icons.restart_alt, size: 19, color: c.textSecondary),
+            ),
+        ],
+      ),
+    );
+  }
+
+  DateTime computedFor(int minutes) {
+    final n = DateTime.now();
+    return DateTime(n.year, n.month, n.day).add(Duration(minutes: minutes));
+  }
+
+  /// বর্তমান সেটিংস অনুযায়ী আজকের হিসাব (শুধু প্রদর্শনের জন্য)।
+  PrayerTimeResult _computedNow() {
+    final n = DateTime.now();
+    return PrayTimesEngine.compute(
+      date: n,
+      lat: DeenStore.lat,
+      lng: DeenStore.lng,
+      tzMinutes: DeenStore.tzMinutes,
+      method: PrayMethod.fromKey(_method),
+      asr: AsrJuristic.fromKey(_asr),
+      highLat: HighLatRule.fromKey(_highLat),
+      offsets: DeenStore.offsets,
+    );
+  }
+
+  Future<void> _pickTime(AppColors c, String p, PrayerKind kind, int? current) async {
+    final base = current == null ? _computedNow().of(kind)! : computedFor(current);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: base.hour, minute: base.minute),
+    );
+    if (picked == null) return;
+    setState(() => _custom[p] = picked.hour * 60 + picked.minute);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text('${_prayerNames[p]} — ${_SalahScreenState._tfmt(computedFor(picked.hour * 60 + picked.minute))}'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: c.surfaceColor,
+      ));
+  }
 
   Widget _switchTile(
     AppColors c, {

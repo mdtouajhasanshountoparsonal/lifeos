@@ -56,6 +56,7 @@ class DeenNotifications {
     }
 
     await _requestPermission();
+    await _requestExactAlarms();
   }
 
   static Future<void> _requestPermission() async {
@@ -63,6 +64,17 @@ class DeenNotifications {
         _p.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
     await android?.requestNotificationsPermission();
+  }
+
+  /// Android 12+ এ exact alarm না থাকলে নামাজের সময় ± কয়েক মিনিট হোঁচট করে।
+  /// তাই না থাকলে সিস্টেম ডায়ালগ দেখাই — চাওয়া না হলে inexact-এ নামে।
+  static Future<void> _requestExactAlarms() async {
+    final android =
+        _p.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    if (android == null) return;
+    if (await android.canScheduleExactNotifications() ?? false) return;
+    await android.requestExactAlarmsPermission();
   }
 
   static Future<bool> notificationsEnabled() async {
@@ -91,7 +103,7 @@ class DeenNotifications {
 
     for (var day = 0; day < _scheduleDays; day++) {
       final date = today.add(Duration(days: day));
-      final times = PrayTimesEngine.compute(
+      final base = PrayTimesEngine.compute(
         date: date,
         lat: DeenStore.lat,
         lng: DeenStore.lng,
@@ -100,6 +112,11 @@ class DeenNotifications {
         asr: AsrJuristic.fromKey(DeenStore.asrKey),
         highLat: HighLatRule.fromKey(DeenStore.highLatKey),
         offsets: DeenStore.offsets,
+      );
+      final times = PrayTimesEngine.withCustomTimes(
+        base,
+        date,
+        customMinutes: DeenStore.customTimes,
       );
 
       for (var i = 0; i < DeenStore.prayers.length; i++) {
@@ -130,7 +147,7 @@ class DeenNotifications {
           title: '🕌 ${_names[prayer]} এর সময় হয়েছে',
           body: 'এখন নামাজ আদায়ের সময়।',
           scheduledDate: when,
-          notificationDetails: _details(prayer),
+          notificationDetails: _details(),
           androidScheduleMode: useExact
               ? AndroidScheduleMode.exactAllowWhileIdle
               : AndroidScheduleMode.inexactAllowWhileIdle,
@@ -140,15 +157,23 @@ class DeenNotifications {
     }
   }
 
-  static NotificationDetails _details(String prayer) {
+  static NotificationDetails _details() {
     return const NotificationDetails(
       android: AndroidNotificationDetails(
-        'deen_salah',
+        // ইচ্ছাকৃতভাবে _v2: channel একবার তৈরি হলে আর বদলায় না। আগের channel-এ
+        // sound বসানো ছিল না, তাই নতুন id না দিলে ডিভাইসে এখনো নীরব থাকত।
+        'deen_salah_v2',
         'নামাজের সময়',
         channelDescription: 'প্রতি ওয়াক্তে সময় স্মরণ করাবে',
-        importance: Importance.high,
-        priority: Priority.high,
+        importance: Importance.max,
+        priority: Priority.max,
         category: AndroidNotificationCategory.alarm,
+        playSound: true,
+        enableVibration: true,
+        sound: null,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+        enableLights: true,
+        ticker: 'নামাজের সময় হয়েছে',
       ),
       iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
     );

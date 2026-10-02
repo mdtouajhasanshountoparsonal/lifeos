@@ -102,13 +102,28 @@ class PrayerTimeResult {
     }
   }
 
-  /// এখন কোন ওয়াক্ত (next upcoming)
+  /// এখন কোন ওয়াক্ত (next upcoming) — যার সময় আসনি সবার মধ্যে সবচেয়ে ছোটটা।
+  /// ক্রম ধরে প্রথমটা ধরা যায় না: ইউজার যখন নির্দিষ্ট সময় বসায়, তখন ভাগলে
+  /// দুপুর আসার আগেই এসে যেতে পারে, তাই আসল সময় মিলিয়ে দেখি।
   PrayerKind? nextFrom(DateTime now) {
-    final order = [PrayerKind.fajr, PrayerKind.dhuhr, PrayerKind.asr, PrayerKind.maghrib, PrayerKind.isha];
-    for (final k in order) {
-      if (of(k)!.isAfter(now)) return k;
+    PrayerKind? next;
+    DateTime? at;
+    for (final k in const [
+      PrayerKind.fajr,
+      PrayerKind.dhuhr,
+      PrayerKind.asr,
+      PrayerKind.maghrib,
+      PrayerKind.isha,
+    ]) {
+      final t = of(k)!;
+      if (!t.isAfter(now)) continue;
+      if (at == null || t.isBefore(at)) {
+        at = t;
+        next = k;
+      }
     }
-    return null; // আজ সব হয়ে গেছে — পরেরটা আগামীকাল ফজর
+    // আজ সব হয়ে গেছে — পরেরটা আগামীকাল ফজর
+    return next;
   }
 }
 
@@ -175,6 +190,39 @@ class PrayTimesEngine {
       asr: toClock(asrMin),
       maghrib: toClock(maghribMin),
       isha: toClock(ishaMin),
+    );
+  }
+
+  /// ইউজার নিজে ঠিক করা সময় (মিনিট, রাতের শূন্য থেকে গণনা) — গণনাকৃত সময়ের
+  /// উপরে বসে। যেমন জামাতের সময় জানা থাকলে সেটাই বসানো যায়, কিন্তু সূর্যের
+  /// হিসাব নষ্ট হয় না — override না দেওয়া ওয়াক্তে হিসাবই থাকে।
+  static PrayerTimeResult withCustomTimes(
+    PrayerTimeResult base,
+    DateTime date, {
+    Map<PrayerKind, int> customMinutes = const {},
+  }) {
+    if (customMinutes.isEmpty) return base;
+    DateTime at(int m) => DateTime(date.year, date.month, date.day)
+        .add(Duration(minutes: m.clamp(0, 1439)));
+    return PrayerTimeResult(
+      fajr: customMinutes.containsKey(PrayerKind.fajr)
+          ? at(customMinutes[PrayerKind.fajr]!)
+          : base.fajr,
+      sunrise: customMinutes.containsKey(PrayerKind.sunrise)
+          ? at(customMinutes[PrayerKind.sunrise]!)
+          : base.sunrise,
+      dhuhr: customMinutes.containsKey(PrayerKind.dhuhr)
+          ? at(customMinutes[PrayerKind.dhuhr]!)
+          : base.dhuhr,
+      asr: customMinutes.containsKey(PrayerKind.asr)
+          ? at(customMinutes[PrayerKind.asr]!)
+          : base.asr,
+      maghrib: customMinutes.containsKey(PrayerKind.maghrib)
+          ? at(customMinutes[PrayerKind.maghrib]!)
+          : base.maghrib,
+      isha: customMinutes.containsKey(PrayerKind.isha)
+          ? at(customMinutes[PrayerKind.isha]!)
+          : base.isha,
     );
   }
 

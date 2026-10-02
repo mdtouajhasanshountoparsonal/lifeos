@@ -42,6 +42,7 @@ void main() async {
   await Hive.openBox('deen_settings');
   await Hive.openBox('salah_log');
   await Hive.openBox('amal_log');
+  await Hive.openBox('amal_routines');
   await Hive.openBox('tasbih_session');
   await Hive.openBox('deen_meta');
   await Hive.openBox('memorization');

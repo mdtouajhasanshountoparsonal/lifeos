@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:lifeos/services/amal_routine.dart';
 import 'package:lifeos/screens/deen/adhkar_screen.dart';
 import 'package:lifeos/screens/deen/arabic_home_screen.dart';
 import 'package:lifeos/screens/deen/dua_screen.dart';
 import 'package:lifeos/screens/deen/hadith_screen.dart';
 import 'package:lifeos/screens/deen/learn_screen.dart';
 import 'package:lifeos/screens/deen/memorize_screen.dart';
+import 'package:lifeos/screens/deen/routine_editor_screen.dart';
 import 'package:lifeos/screens/deen/post_prayer_screen.dart';
 import 'package:lifeos/screens/deen/salah_screen.dart';
 import 'package:lifeos/screens/deen/surah_list_screen.dart';
@@ -14,6 +16,7 @@ import 'package:lifeos/services/deen_store.dart';
 import 'package:lifeos/services/pray_times.dart';
 import 'package:lifeos/theme/app_theme.dart';
 import 'package:lifeos/widgets/app_background.dart';
+import 'package:lifeos/widgets/count_ring.dart';
 import 'package:lifeos/widgets/content_gate.dart';
 import 'package:lifeos/widgets/entrance_item.dart';
 import 'package:lifeos/widgets/glass_card.dart';
@@ -50,6 +53,8 @@ class DeenHomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   const _NextPrayerCard(),
+                  const SizedBox(height: 18),
+                  const _RoutineCard(),
                   const SizedBox(height: 18),
                   const _TodaySummary(),
                   const SizedBox(height: 18),
@@ -283,6 +288,134 @@ class DeenHomeScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─── আমার রুটিন (Daily Amal) কার্ড ─────────────────────────────────
+class _RoutineCard extends StatelessWidget {
+  const _RoutineCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppTheme.of(context);
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Hive.box('amal_routines').listenable(),
+        Hive.box('amal_log').listenable(),
+      ]),
+      builder: (context, _) {
+        final items = [
+          for (final i in AmalRoutineStore.load())
+            if (i.enabled) i,
+        ];
+        final ratio = AmalRoutineStore.todayRatio();
+        final doneCount = (ratio * items.length).round();
+        final remaining = AmalRoutineStore.todayRemaining();
+        return GlassCard(
+          padding: const EdgeInsets.all(16),
+          borderRadius: BorderRadius.circular(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  SizedBox(
+                    width: 46,
+                    height: 46,
+                    child: CountRing(
+                      progress: ratio,
+                      color: c.glow,
+                      trackColor: c.surfaceColor,
+                      strokeWidth: 5,
+                      child: Center(
+                        child: Text(
+                          _bnNum((ratio * 100).round().toString()),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: c.glow,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '🎯 আজকের আমল',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: c.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          items.isEmpty
+                              ? 'রুটিন সেট করে শুরু করো'
+                              : '${_bnNum(doneCount.toString())} / ${_bnNum(items.length.toString())} সম্পন্ন',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: c.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context)
+                        .push(FadeRoute(const RoutineEditorScreen())),
+                    style: TextButton.styleFrom(
+                      foregroundColor: c.glow,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    child: const Text('সম্পাদনা',
+                        style: TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ],
+              ),
+              if (remaining.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final it in remaining.take(4))
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: c.cardColor,
+                          borderRadius: BorderRadius.circular(9),
+                          border: Border.all(
+                            color: c.textSecondary.withValues(alpha: 0.15),
+                          ),
+                        ),
+                        child: Text(
+                          '${it.emoji ?? '✓'} ${it.title}${it.isCounted ? ' ${_bnNum(it.target.toString())}×' : ''}',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: c.textSecondary,
+                          ),
+                        ),
+                      ),
+                    if (remaining.length > 4)
+                      Text(
+                        '+${_bnNum((remaining.length - 4).toString())}',
+                        style: TextStyle(
+                            fontSize: 10.5, color: c.textSecondary),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }

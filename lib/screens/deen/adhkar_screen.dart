@@ -249,7 +249,7 @@ class _AdhkarScreenState extends State<AdhkarScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                '$_bnNum(finished.toString())/$_bnNum(all.toString())',
+                '${_bnNum(finished.toString())}/${_bnNum(all.toString())}',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,

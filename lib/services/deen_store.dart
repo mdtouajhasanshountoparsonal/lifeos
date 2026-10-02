@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:lifeos/services/amal_routine.dart';
 import 'package:lifeos/services/pray_times.dart';
 import 'package:lifeos/services/review_scheduler.dart';
 
@@ -183,6 +184,33 @@ class DeenStore {
       }
     }
     return map;
+  }
+
+  /// ইউজার প্রতিটি ওয়াক্তের নির্দিষ্ট সময় নিজে ঠিক করতে পারেন (রাতের শূন্য থেকে
+  /// মিনিট)। যেটা সেট করা নেই সেটা সূর্যের হিসাবেই থাকে — override সবসময় ঐচ্ছিক।
+  static Map<PrayerKind, int> get customTimes {
+    final raw = _settings.get('customTimes', defaultValue: {});
+    final map = <PrayerKind, int>{};
+    if (raw is Map) {
+      for (final e in raw.entries) {
+        final k = PrayerKind.values.where((p) => p.name == e.key).firstOrNull;
+        if (k != null && e.value is int) map[k] = e.value as int;
+      }
+    }
+    return map;
+  }
+
+  static bool hasCustomTime(PrayerKind k) => customTimes.containsKey(k);
+
+  /// [minutes] রাতের শূন্য থেকে মিনিট; null দিলে override সরে যায়।
+  static void saveCustomTime(PrayerKind k, int? minutes) {
+    final map = customTimes;
+    if (minutes == null) {
+      map.remove(k);
+    } else {
+      map[k] = minutes.clamp(0, 1439);
+    }
+    _settings.put('customTimes', {for (final e in map.entries) e.key.name: e.value});
   }
 
   // ─── Notification settings ───────────────────────────────────────────
@@ -383,6 +411,17 @@ class DeenStore {
       'ts': DateTime.now().toIso8601String(),
     });
     _tasbih.put('runs', runs.take(30).toList());
+
+    // ── Bridge: রুটিনের মিলে যাওয়া তাসবিহ আইটেমে আজকের আমল ক্রেডিট হয় ──
+    // রান সেভ করলেই amal_log-এ চলে যায়, তাই Today progress/streak-এ গোনা হয়।
+    try {
+      final item = AmalRoutineStore.tasbihByName(name);
+      if (item != null && count > 0) {
+        AmalRoutineStore.addTodayProgress(item.id, count);
+      }
+    } catch (_) {
+      // amal_routines box না খোলা থাকলেও তাসবিহ রান নষ্ট হবে না।
+    }
   }
 
   static void clearTasbihRuns() => _tasbih.delete('runs');

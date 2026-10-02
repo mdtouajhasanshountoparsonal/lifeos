@@ -138,7 +138,7 @@ class _PostPrayerScreenState extends State<PostPrayerScreen> {
   Widget _body(AppColors c) {
     if (_finished) return _finishedView(c);
     final s = _steps[_step];
-    final done = _doneSteps.contains(_step) || _counts[_step] >= s.repeat;
+    final _ = _doneSteps.contains(_step) || _counts[_step] >= s.repeat;
     return Column(
       children: [
         Padding(
@@ -182,10 +182,16 @@ class _PostPrayerScreenState extends State<PostPrayerScreen> {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _steps.length,
             onPageChanged: (i) => setState(() => _step = i),
-            itemBuilder: (context, i) => Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
-              child: s.readOnly ? _readStep(c, s, done) : _countStep(c, s, done),
-            ),
+            itemBuilder: (context, i) {
+              final step = _steps[i];
+              final stepDone = _counts[i] >= step.repeat;
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+                child: step.readOnly
+                    ? _readStep(c, step, stepDone)
+                    : _countStep(c, step, stepDone),
+              );
+            },
           ),
         ),
       ],
