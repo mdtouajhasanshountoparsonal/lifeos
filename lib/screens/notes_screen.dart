@@ -729,7 +729,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
     _loadSavedTree();
   }
 
-  /// আগের AI-গাছ থাকলে editor-এ আগে থেকেই দেখানো হয় (লেখা বদলানো হয় না)।
+  /// আগের AI-সাজেশন থাকলে editor-এ আগে থেকেই দেখানো হয় (লেখা বদলানো হয় না)।
   void _loadSavedTree() {
     final saved = AiTreeStore.get(_id, task: false);
     if (saved == null) return;
@@ -753,7 +753,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
     }
   }
 
-  /// P3+: ✨ AI বাটন — offline বট / ইন্টারনেট থাকলে Gemini, শেখা জমা হয়।
+  /// P3+: ✨ AI বাটন — অফলাইন AI / ইন্টারনেট থাকলে Gemini, শেখা জমা হয়।
   Future<void> _runAi() async {
     final text = _contentCtrl.text.trim();
     if (text.isEmpty || _aiLoading) return;
@@ -770,8 +770,8 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
         SnackBar(
           content: Text(
             r.usedOnline
-                ? '🌐 Gemini দিয়ে গাছ বানানো হলো'
-                : '🤖 offline বট দিয়ে গাছ বানানো হলো',
+                ? '🌐 AI দিয়ে সাজানো হলো'
+                : '🤖 অফলাইন AI দিয়ে সাজানো হলো',
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -1299,7 +1299,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
                         children: [
                           Icon(Icons.auto_awesome_rounded, size: 13, color: c.glow),
                           const SizedBox(width: 4),
-                          Text('AI গাছ',
+                          Text('AI সাজেশন',
                               style: TextStyle(
                                   fontSize: 11, fontWeight: FontWeight.w700, color: c.glow)),
                         ],
@@ -1858,7 +1858,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
             Row(
               children: [
                 Text(
-                  '🌳 নোটের গাছ',
+                  '🌳 নোটের সাজেশন',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
@@ -1874,7 +1874,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'প্রতি # অংশ আলাদা রঙে • ভেতরে লিখলে গাছের ডালের মতো',
+              'প্রতি # অংশ আলাদা রঙে • ভেতরে লিখলে সাজেশনের ডালের মতো',
               style: TextStyle(fontSize: 11, color: c.textSecondary),
             ),
             const SizedBox(height: 10),
@@ -2237,7 +2237,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
                     color: c.mediumPriority,
                   ),
                   label: Text(
-                    '🌳 গাছ / আউটলাইন',
+                    '🌳 সাজেশন / আউটলাইন',
                     style: TextStyle(fontSize: 13, color: c.mediumPriority),
                   ),
                 ),
@@ -2898,7 +2898,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
                 const SizedBox(width: 4),
                 IconButton(
                   onPressed: _aiLoading ? null : _runAi,
-                  tooltip: 'AI গাছ (online / offline)',
+                  tooltip: 'AI সাজেশন (online / offline)',
                   visualDensity: VisualDensity.compact,
                   icon: _aiLoading
                       ? SizedBox(
@@ -2990,7 +2990,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'AI গাছ',
+                                    'AI সাজেশন',
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
@@ -3357,7 +3357,7 @@ class _MarketAiTreeSheetState extends State<_MarketAiTreeSheet> {
             children: [
               Icon(Icons.auto_awesome_rounded, size: 18, color: c.glow),
               const SizedBox(width: 8),
-              Text('AI বাজার গাছ',
+              Text('AI বাজার সাজেশন',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: c.textPrimary)),
               const Spacer(),
               IconButton(
@@ -3384,7 +3384,7 @@ class _MarketAiTreeSheetState extends State<_MarketAiTreeSheet> {
           children: [
             Icon(Icons.cloud_off_rounded, size: 32, color: c.textSecondary),
             const SizedBox(height: 10),
-            Text('AI গাছ বানানো গেল না', style: TextStyle(fontSize: 14, color: c.textSecondary)),
+            Text('AI সাজেশন বানানো গেল না', style: TextStyle(fontSize: 14, color: c.textSecondary)),
             const SizedBox(height: 4),
             Text(_error!, textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 11, color: c.expense)),
@@ -3404,7 +3404,7 @@ class _MarketAiTreeSheetState extends State<_MarketAiTreeSheet> {
       );
     }
     if (!_tree!.hasNodes) {
-      return Center(child: Text('কোনো গাছ মেলেনি', style: TextStyle(color: c.textSecondary)));
+      return Center(child: Text('কোনো সাজেশন মেলেনি', style: TextStyle(color: c.textSecondary)));
     }
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
